@@ -21,16 +21,13 @@
 
 #include "client.h"
 #include "xbmc_pvr_dll.h"
-#include "dvblinkremote.h"
-#include "platform/os.h"
-#include "curlhttpclient.h"
+#include "..\project\VS2010Express\DVBLinkClient.h"
 
 //#include "curl/curl.h"
 
 using namespace std;
 using namespace ADDON;
-using namespace dvblinkremote;
-using namespace dvblinkremotehttp;
+
 
 #ifdef TARGET_WINDOWS
 #define snprintf _snprintf
@@ -39,16 +36,12 @@ using namespace dvblinkremotehttp;
 bool           m_bCreated       = false;
 ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 
-CurlHttpClient* httpClient = NULL; 
-IDVBLinkRemoteConnection* dvblinkRemoteCommunication;
 
-//PVRDemoData   *m_data           = NULL;
 bool           m_bIsPlaying     = false;
-//PVRDemoChannel m_currentChannel;
-
-
 std::string g_strUserPath             = "";
 std::string g_strClientPath           = "";
+
+DVBLinkClient* dvblinkclient = NULL;
 
 std::string g_szHostname           = DEFAULT_HOST;                  ///< The Host name or IP of the DVBLink Server
 int         g_iPort                = DEFAULT_PORT;                  ///< The DVBLink Connect Server listening port (default: 8080)
@@ -164,24 +157,8 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
   ADDON_ReadSettings();
 
-  httpClient = new CurlHttpClient();
-  dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, g_szHostname.c_str(), g_iPort, g_szUsername.c_str(), g_szPassword.c_str());
 
-  DVBLinkRemoteStatusCode status;
-  GetChannelsRequest* request = new GetChannelsRequest();
-  ChannelList* response = new ChannelList();
-
-  if ((status = dvblinkRemoteCommunication->GetChannels(*request, *response)) == DVBLINK_REMOTE_STATUS_OK) {
-	 // std::cout << "Channels:" << std::endl;
-	  //std::cout << "----------------------" << std::endl;
-
-	  for (std::vector<Channel*>::iterator it = response->begin(); it < response->end(); it++) 
-	  {
-		  printf("[%d]\t%s\n", (*it)->Number, (*it)->GetName().c_str());
-	  }
-  }
-
-
+  dvblinkclient = new DVBLinkClient(PVR,g_szHostname, g_iPort, g_szUsername,g_szPassword);
 
   m_CurStatus = ADDON_STATUS_OK;
   m_bCreated = true;
@@ -195,8 +172,7 @@ ADDON_STATUS ADDON_GetStatus()
 
 void ADDON_Destroy()
 {
-	delete dvblinkRemoteCommunication;
-	delete httpClient;
+	delete dvblinkclient;
 	m_bCreated = false;
     m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
@@ -356,16 +332,16 @@ PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time
 
 int GetChannelsAmount(void)
 {
-  //if (m_data)
-  //  return m_data->GetChannelsAmount();
+  if (dvblinkclient)
+    return dvblinkclient->GetChannelsAmount();
 
   return -1;
 }
 
 PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
-  //if (m_data)
-   // return m_data->GetChannels(handle, bRadio);
+  if (dvblinkclient)
+    return dvblinkclient->GetChannels(handle, bRadio);
 
   return PVR_ERROR_SERVER_ERROR;
 }

@@ -18,9 +18,15 @@
     <ClCompile Include="..\..\src\client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DVBLinkClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DVBLinkClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
