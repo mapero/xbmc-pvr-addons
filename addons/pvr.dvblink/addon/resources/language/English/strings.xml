@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+    <!-- settings labels -->
+    <string id="30041">DvbLink Connect Server Hostname</string>
+    <string id="30042">DvbLink Connect Server Port</string>
+	<string id="30043">Client name</string>
+    <string id="30044">Connect timeout (s)</string>
+	<string id="30031">Stream type</string>
+	<string id="30045">Username</string>
+	<string id="30046">Password</string>	
+    <!-- category labels -->
+    <string id="30040">Connection</string>
+    <string id="30030">Stream</string>
+</strings>
