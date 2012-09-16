@@ -32,6 +32,8 @@ namespace dvblinkremote {
     */
   class Response { };
 
+  enum ChannelType {RD_CHANNEL_TV = 0, RD_CHANNEL_RADIO = 1, RD_CHANNEL_OTHER = 2};
+
   /**
     * Represent a DVBLink channel.
     */
@@ -43,10 +45,11 @@ namespace dvblinkremote {
       * @param id a constant string reference representing the generic identifier of the channel.
       * @param dvbLinkId a constant long representing the DVBLink identifier of the channel.
       * @param name a constant string reference representing the name of the channel.
+	  * @param type of channel TV = 0, RADIO = 1, OTHER = 2
       * @param number an optional constant integer representing the number of the channel.
       * @param subNumber an optional constant integer representing the sub-number of the channel.
       */
-    Channel(const std::string& id, const long dvbLinkId, const std::string& name, const int number = -1, const int subNumber = -1);
+    Channel(const std::string& id, const long dvbLinkId, const std::string& name, const ChannelType type, const int number = -1, const int subNumber = -1);
 
     /**
       * Initializes a new instance of the dvblinkremote::Channel class by coping another 
@@ -87,6 +90,11 @@ namespace dvblinkremote {
       * Represents the sub-number of the channel.
       */
     int SubNumber;
+
+	/**
+	  * Represents the type of channel
+	  */
+	ChannelType Type;
     
   private:
     std::string m_id;
