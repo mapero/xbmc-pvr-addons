@@ -29,11 +29,16 @@
 
 extern bool                          m_bCreated;
 
+
+
+
+enum DVBLINK_STREAMTYPE {HTTP=0,RTP=1,UDP=2,hls =3, asf=4};
+
 /*  Client Settings default values */
 #define DEFAULT_HOST                  "127.0.0.1"
 #define DEFAULT_PORT                  8080
 #define DEFAULT_TIMEOUT               10
-#define DEFAULT_STREAMTYPE			  "http"
+#define DEFAULT_STREAMTYPE			  HTTP
 #define DEFAULT_CLIENTNAME			  "xbmc"
 #define DEFAULT_USERNAME			  ""
 #define DEFAULT_PASSWORD			  ""
@@ -41,11 +46,12 @@ extern bool                          m_bCreated;
 /* Client Settings */
 extern std::string  g_szclientname;
 extern std::string  g_szHostname;
-extern int          g_iPort;
+extern long          g_iPort;
 extern int          g_iConnectTimeout;
-extern std::string  g_szStreamType;
+extern DVBLINK_STREAMTYPE  g_szStreamType;
 extern std::string  g_szUsername;
 extern std::string  g_szPassword;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr          *PVR;
+
