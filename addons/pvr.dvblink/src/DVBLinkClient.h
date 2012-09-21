@@ -7,11 +7,15 @@
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
 #include "client.h"
+#include "..\threads\mutex.h"
 
 
 using namespace dvblinkremote;
 using namespace dvblinkremotehttp;
 using namespace ADDON;
+
+
+#define DVBLINK_BUILD_IN_RECORDER_SOURCE_ID   "8F94B459-EFC0-4D91-9B29-EC3D72E92677"
 
 class DVBLinkClient
 {
@@ -21,8 +25,13 @@ public:
 	int GetChannelsAmount();
 	PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
 	PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channel, time_t iStart, time_t iEnd);
+	int GetRecordingsAmount();
 	PVR_ERROR GetRecordings(ADDON_HANDLE handle);
+	PVR_ERROR DeleteRecording(const PVR_RECORDING& recording);
+	int GetTimersAmount();
 	PVR_ERROR GetTimers(ADDON_HANDLE handle);
+	PVR_ERROR AddTimer(const PVR_TIMER &timer);
+	PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
 	bool GetStatus();
 	const char * GetLiveStreamURL(const PVR_CHANNEL &channel);
 	void StopStreaming();
@@ -33,6 +42,11 @@ private:
 	bool connected;
 
 	ChannelList* channels;
+	ScheduleList * schedules;
+	RecordingList * recordings;
+
+	 PLATFORM::CMutex        m_mutex;
+
 	Stream * stream;
 	CHelper_libXBMC_pvr *PVR;
 	CHelper_libXBMC_addon  *XBMC; 
@@ -40,7 +54,8 @@ private:
 	std::string clientname;
 	std::string hostname;
 	void SetEPGGenre(Program *program, EPG_TAG *tag);
-
+	std::string GetBuildInRecorderObjectID();
+	std::string GetRecordedTVByDateObjectID(const std::string& buildInRecoderObjectID);
 };
 
 /*!

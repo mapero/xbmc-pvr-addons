@@ -293,8 +293,8 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
 
   pCapabilities->bSupportsEPG                = true;
-  pCapabilities->bSupportsRecordings         = false; //TODO: ADD when possible to see recording
-  pCapabilities->bSupportsTimers             = false; //TODO: ADD when possible to manipulate timers
+  pCapabilities->bSupportsRecordings         = true; //TODO: ADD when possible to see recording
+  pCapabilities->bSupportsTimers             = true;
   pCapabilities->bSupportsTV                 = true;
   pCapabilities->bSupportsRadio              = true;
   pCapabilities->bHandlesInputStream         = true;
@@ -356,6 +356,7 @@ int GetChannelsAmount(void)
 
 PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
+	int i = 0;
   if (dvblinkclient)
     return dvblinkclient->GetChannels(handle, bRadio);
 
@@ -386,31 +387,61 @@ void CloseLiveStream(void)
 
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
 { 
+
 	return dvblinkclient->GetLiveStreamURL(channel);
 }
+int GetTimersAmount(void) { 
+	if (dvblinkclient)
+	return dvblinkclient->GetTimersAmount();
 
-int GetTimersAmount(void) { return -1; }
-
-PVR_ERROR GetTimers(ADDON_HANDLE handle) { 
-	return PVR_ERROR_NOT_IMPLEMENTED;
-	//return dvblinkclient->GetTimers(handle); 
+	return -1;
 }
-PVR_ERROR AddTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR GetTimers(ADDON_HANDLE handle) { 
+	if (dvblinkclient)
+	return dvblinkclient->GetTimers(handle); 
+
+	return PVR_ERROR_FAILED;
+}
+PVR_ERROR AddTimer(const PVR_TIMER &timer) 
+{
+	if (dvblinkclient)
+		return dvblinkclient->AddTimer(timer);
+	return PVR_ERROR_FAILED;
+}
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete)
+{
+	if (dvblinkclient)
+		return dvblinkclient->DeleteTimer(timer);
+
+	return PVR_ERROR_NOT_IMPLEMENTED;
+}
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
 
 
 int GetRecordingsAmount(void)
 { 
-	
-	return -1; 
+	if (dvblinkclient)
+		return dvblinkclient->GetRecordingsAmount();
+
+	return -1;
 }
 PVR_ERROR GetRecordings(ADDON_HANDLE handle) 
 {
-	return PVR_ERROR_NOT_IMPLEMENTED;
-	//return dvblinkclient->GetRecordings(handle);
+	if (dvblinkclient)
+		return dvblinkclient->GetRecordings(handle); 
+
+	return PVR_ERROR_FAILED;
 }
 
+PVR_ERROR DeleteRecording(const PVR_RECORDING &recording)
+{ 
+	
+	if (dvblinkclient)
+		return dvblinkclient->DeleteRecording(recording); 
+
+	return PVR_ERROR_FAILED; 
+
+}
 
 int GetCurrentClientChannel(void)
 {
@@ -466,7 +497,6 @@ long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */) { re
 long long PositionLiveStream(void) { return -1; }
 long long LengthLiveStream(void) { return -1; }
 
-PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR RenameRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; }

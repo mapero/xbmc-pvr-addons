@@ -25,24 +25,17 @@
 
 using namespace dvblinkremote;
 
-AddScheduleRequest::AddScheduleRequest(const DVBLinkScheduleType scheduleType, const std::string& channelId, const int recordingsToKeep) 
-  : m_scheduleType(scheduleType), m_channelId(channelId), RecordingsToKeep(recordingsToKeep)
+DeleteScheduleRequest::DeleteScheduleRequest(const std::string& scheduleId) 
+  : m_scheduleId(scheduleId)
 { 
-  UserParameter = "";
-  ForceAdd = false;
 }
 
-AddScheduleRequest::~AddScheduleRequest()
+DeleteScheduleRequest::~DeleteScheduleRequest()
 {
 
 }
 
-std::string& AddScheduleRequest::GetChannelID() 
+std::string& DeleteScheduleRequest::GetScheduleID() 
 { 
-  return m_channelId; 
-}
-
-AddScheduleRequest::DVBLinkScheduleType& AddScheduleRequest::GetScheduleType() 
-{ 
-  return m_scheduleType; 
+  return m_scheduleId; 
 }
