@@ -41,13 +41,13 @@ private:
 	IDVBLinkRemoteConnection* dvblinkRemoteCommunication;
 	bool connected;
 
+	Stream  * stream;
 	ChannelList* channels;
-	ScheduleList * schedules;
-	RecordingList * recordings;
+	long timerCount;
+	long recordingCount;
 
 	 PLATFORM::CMutex        m_mutex;
 
-	Stream * stream;
 	CHelper_libXBMC_pvr *PVR;
 	CHelper_libXBMC_addon  *XBMC; 
 	DVBLINK_STREAMTYPE streamtype;

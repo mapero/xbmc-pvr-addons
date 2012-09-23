@@ -15,8 +15,10 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 
 	DVBLinkRemoteStatusCode status;
 	channels = NULL;
-	schedules = NULL;
-	recordings = NULL;
+	timerCount = -1;
+	recordingCount = -1;
+
+	stream = new Stream();
 
 	GetChannelsRequest* request = new GetChannelsRequest();
 	channels = new ChannelList();
@@ -74,24 +76,16 @@ PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 
 int DVBLinkClient::GetTimersAmount()
 {
-	if (schedules != NULL)
-	{
-		PLATFORM::CLockObject critsec(m_mutex);
-		return schedules->size();
-	}
-	return -1;
+	return timerCount;
 }
 
 PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 {
+	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
+
 	GetSchedulesRequest * getSchedulesRequest = new GetSchedulesRequest();
-	
-	if (schedules != NULL)
-	{
-	delete(schedules);
-	}
-	schedules = new ScheduleList();
+	ScheduleList * schedules = new ScheduleList();
 
 	DVBLinkRemoteStatusCode status;
 	if ((status = dvblinkRemoteCommunication->GetSchedules(*getSchedulesRequest, *schedules)) == DVBLINK_REMOTE_STATUS_OK) {
@@ -119,21 +113,22 @@ PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 				PVR_STRCPY(xbmcTimer.strTitle,schedule->GetTitle().c_str());
 			}
 
+
 			PVR->TransferTimerEntry(handle, &xbmcTimer);
 		}
-
-		delete(getSchedulesRequest);
-	}else{
-		delete(getSchedulesRequest);
-
-		return PVR_ERROR_FAILED;
+		timerCount = schedules->size();
+		result = PVR_ERROR_NO_ERROR;
 	}
+	delete schedules;
+	delete getSchedulesRequest;
 	
-	return PVR_ERROR_NO_ERROR;
+	return result;
 }
 
 PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 {
+	PVR_ERROR result = PVR_ERROR_FAILED;
+
 	PLATFORM::CLockObject critsec(m_mutex);
 	DVBLinkRemoteStatusCode status;
 	AddScheduleRequest * addScheduleRequest = NULL;
@@ -150,14 +145,17 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 	}
 	if ( (status = dvblinkRemoteCommunication->AddSchedule(*addScheduleRequest)) == DVBLINK_REMOTE_STATUS_OK)
 	{
-		return PVR_ERROR_NO_ERROR;
+		PVR->TriggerTimerUpdate();
+		result = PVR_ERROR_NO_ERROR;
 	}
+	delete addScheduleRequest;
 	
-	return PVR_ERROR_FAILED;
+	return result;
 }
 
 PVR_ERROR DVBLinkClient::DeleteTimer(const PVR_TIMER &timer)
 {
+	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
 	DVBLinkRemoteStatusCode status;
 	char scheduleId [33];
@@ -167,28 +165,23 @@ PVR_ERROR DVBLinkClient::DeleteTimer(const PVR_TIMER &timer)
 
 
 	if ((status = dvblinkRemoteCommunication->RemoveSchedule(*removeSchedule)) == DVBLINK_REMOTE_STATUS_OK) {
-		delete removeSchedule;
-		return PVR_ERROR_NO_ERROR;
-	}else{
-		XBMC->Log(LOG_ERROR, "Could not delete Timer");
-		return PVR_ERROR_FAILED;
-	}
 
-	
+		PVR->TriggerTimerUpdate();
+		result = PVR_ERROR_NO_ERROR;
+	}
+	delete removeSchedule;
+	return result;
 }
 
 int DVBLinkClient::GetRecordingsAmount()
 {
-	if (recordings != NULL)
-	{
-		PLATFORM::CLockObject critsec(m_mutex);
-		return recordings->size();
-	}
-	return -1;
+
+	return recordingCount;
 }
 
 std::string DVBLinkClient::GetBuildInRecorderObjectID()
 {
+	std::string result = "";
 	DVBLinkRemoteStatusCode status;
 	GetObjectRequest * getObjectsRequest = new GetObjectRequest(hostname.c_str(), "", OBJECT_TYPE_UNKNOWN, ITEM_TYPE_UNKNOWN,0,-1,true);
 	GetObjectResult * getObjectsResult = new GetObjectResult();
@@ -199,20 +192,21 @@ std::string DVBLinkClient::GetBuildInRecorderObjectID()
 			Container * container = (Container *) *it;
 			if (strcmp(container->SourceId.c_str(), DVBLINK_BUILD_IN_RECORDER_SOURCE_ID) == 0)
 			{
-				//TODO: PAE: delete request / response objects
-				return container->ObjectID;
+				result = container->ObjectID;
+				break;
 			}
 
 		}
 	}
 	delete getObjectsRequest;
 	delete getObjectsResult;
-	return "";
+	return result;
 }
 
 
 std::string DVBLinkClient::GetRecordedTVByDateObjectID(const std::string& buildInRecoderObjectID)
 {
+	std::string result = "";
 	DVBLinkRemoteStatusCode status;
 	GetObjectRequest * getRecordedTVRequest = new GetObjectRequest(hostname.c_str(),buildInRecoderObjectID, OBJECT_TYPE_UNKNOWN, ITEM_TYPE_UNKNOWN,0,-1,true);
 	GetObjectResult * getRecordedTVResult = new GetObjectResult();
@@ -223,33 +217,39 @@ std::string DVBLinkClient::GetRecordedTVByDateObjectID(const std::string& buildI
 			Container * container = (Container *) *it;
 			if (strcmp(container->Name.c_str(), "By Date") == 0)
 			{
-				//TODO: PAE: delete request / response objects
-				return container->ObjectID;
+				result = container->ObjectID;
+				break;
 			}
 		}
 
 	}
 	delete getRecordedTVRequest;
 	delete getRecordedTVResult;
-
+	return result;
 
 }
 
 PVR_ERROR DVBLinkClient::DeleteRecording(const PVR_RECORDING& recording)
 {
+    PLATFORM::CLockObject critsec(m_mutex);
+	PVR_ERROR result = PVR_ERROR_FAILED;
 	DVBLinkRemoteStatusCode status;
 	RemoveObjectRequest * deleteObj = new RemoveObjectRequest(recording.strRecordingId);
 	if ((status = dvblinkRemoteCommunication->RemoveObject(*deleteObj)) == DVBLINK_REMOTE_STATUS_OK) {
-		delete deleteObj;
-		return PVR_ERROR_NO_ERROR;
+
+		PVR->TriggerRecordingUpdate();
+		 result = PVR_ERROR_NO_ERROR;
 	}
-	return PVR_ERROR_FAILED;
+
+	delete deleteObj;
+	return result;
 }
 
 
 PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 {
-
+	PLATFORM::CLockObject critsec(m_mutex);
+	PVR_ERROR result = PVR_ERROR_FAILED;
 	DVBLinkRemoteStatusCode status;
 
 	std::string recoderObjectId = GetBuildInRecorderObjectID();
@@ -278,41 +278,48 @@ PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 				PVR->TransferRecordingEntry(handle, &xbmcRecording);
 			}
 		}
+		recordingCount = getRecordedTVResult->Items.size();
+		result = PVR_ERROR_NO_ERROR;
 	
 	}
-	return PVR_ERROR_NO_ERROR;
+	delete getRecordedTVRequest;
+	delete getRecordedTVResult;
+	return result;
 }
 
 const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel)
 {
-	switch(streamtype)
+		PLATFORM::CLockObject critsec(m_mutex);
+	StreamRequest * streamRequest = NULL;
+ 	switch(streamtype)
 	{
 	case HTTP:
-		RawHttpStreamRequest * streamRequest = new RawHttpStreamRequest(hostname.c_str(), channel.iUniqueId, clientname.c_str());
-		stream = new Stream();
+		streamRequest = new RawHttpStreamRequest(hostname.c_str(), channel.iUniqueId, clientname.c_str());
 		DVBLinkRemoteStatusCode status;
-		if ((status = dvblinkRemoteCommunication->PlayChannel(*streamRequest, *stream)) == DVBLINK_REMOTE_STATUS_OK) {
-			delete streamRequest;
-			return stream->GetUrl().c_str();
+		if ((status = dvblinkRemoteCommunication->PlayChannel(*streamRequest, *stream)) != DVBLINK_REMOTE_STATUS_OK) {
+			XBMC->Log(LOG_ERROR,"Could not get stream for channel %i", channel.iUniqueId);
 		}
 		break;
 	}
 
-	XBMC->Log(LOG_ERROR, "Could not get stream URL for channel '%s' (%i)", channel.strChannelName, channel.iUniqueId);
+	if (streamRequest != NULL)
+	{
+		delete streamRequest;
+	}
 
-	return "";
+	return stream->GetUrl().c_str();
 }
 
 void DVBLinkClient::StopStreaming()
 {
+	PLATFORM::CLockObject critsec(m_mutex);
 	StopStreamRequest * request = new StopStreamRequest(clientname);
 	DVBLinkRemoteStatusCode status;
-	if ((status = dvblinkRemoteCommunication->StopChannel(*request)) == DVBLINK_REMOTE_STATUS_OK) {
-		delete stream;
-		delete request;
-	}else{
+	if ((status = dvblinkRemoteCommunication->StopChannel(*request)) != DVBLINK_REMOTE_STATUS_OK) {
 		XBMC->Log(LOG_ERROR, "Could not stop stream");
 	}
+	delete request;
+
 }
 
 void DVBLinkClient::SetEPGGenre(Program *program, EPG_TAG *tag)
@@ -370,6 +377,7 @@ void DVBLinkClient::SetEPGGenre(Program *program, EPG_TAG *tag)
 
 PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channel, time_t iStart, time_t iEnd)
 {
+	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
 	char channelId [33];
 	_itoa (channel.iUniqueId,channelId,10);
@@ -416,16 +424,17 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 				PVR->TransferEpgEntry(handle, &broadcast);
 			}
 		}
-		delete(epgSearchRequest);
-		delete(epgSearchResult);
+		result = PVR_ERROR_NO_ERROR;
 	}else
 	{
 		XBMC->Log(LOG_ERROR, "Not EPG data found for channel : %s with id : %i", channel.strChannelName, channel.iUniqueId);
 
-		return PVR_ERROR_FAILED;
 	}
 
-	return PVR_ERROR_NO_ERROR;
+	delete(epgSearchRequest);
+	delete(epgSearchResult);
+
+	return result;
 }
 
 DVBLinkClient::~DVBLinkClient(void)
