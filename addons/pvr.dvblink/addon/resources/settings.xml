@@ -4,13 +4,13 @@
   <category label="30040">
     <setting id="host" type="text" label="30041" option="urlencoded" default="127.0.0.1" />
     <setting id="port" type="number" label="30042" default="8080" />
-    <setting id="timeout" type="enum" label="30044" values="0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20" default="10"/>
+    <setting id="timeout" visible="false" type="enum" label="30044" values="0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20" default="10"/>
     <setting id="client" type="text" label="30043" default="xbmc" />
 	<setting id="username" type="text" label="30045" default="" />
 	<setting id="password" type="text" label="30046" default="" />
   </category>
   <!-- Stream -->  
   <category label="30030">
-  <setting id="streamtype" type="enum" label="30031" values="http|rtp|udp|hls|asf" default="http"/>
+  <setting id="streamtype" type="enum" label="30031" values="http" default="http"/>
 </category>
 </settings>

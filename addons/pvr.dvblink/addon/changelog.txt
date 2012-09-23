@@ -1,0 +1,13 @@
+[B]0.0.2[/B]
+Added: Scheduling of recordings using EPG based timers
+Added: Enabled removal of timers
+Added: Listing of recordings (using DVBLink build in recorder)
+Added: Playback of recordings (using DVBLink build in recorder)
+Added: Enabled removal of recordings (using DVBLink build in recorder)
+Fixed: Memory several leaks
+Removed: Not yet implemented steaming and timeout options 
+
+[B]0.0.1[/B]
+Beta release
+Playback of live tv and radio using raw http
+Listing of EPG
