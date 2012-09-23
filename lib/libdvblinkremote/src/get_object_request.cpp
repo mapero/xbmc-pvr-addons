@@ -61,6 +61,31 @@ GetObjectResult::~GetObjectResult()
 
 }
 
+ItemList::ItemList()
+{
+
+}
+ItemList::~ItemList()
+{
+	for (std::vector<Item*>::iterator it = begin(); it < end(); it++) 
+	{
+		delete (*it);
+	}
+}
+
+ContainerList::ContainerList()
+{
+
+}
+
+ContainerList::~ContainerList()
+{
+	for (std::vector<Container*>::iterator it = begin(); it < end(); it++) 
+	{
+		delete (*it);
+	}
+}
+
 bool GetObjectRequestSerializer::WriteObject(std::string& serializedData, GetObjectRequest& objectGraph)
 {
   tinyxml2::XMLElement* rootElement = PrepareXmlDocumentForObjectSerialization("object_requester"); 

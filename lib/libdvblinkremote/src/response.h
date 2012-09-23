@@ -761,12 +761,16 @@ namespace dvblinkremote {
    //TODO: PAE: Missing description
   class ContainerList :  public std::vector<Container*>
   {
-
+  public:
+	  ContainerList();
+	 ~ContainerList(); 
   };
    //TODO: PAE: Missing description
   class ItemList :  public std::vector<Item*>
   {
-
+  public:
+	  ItemList();
+	  ~ItemList(); 
   };
 
   //TODO: PAE: Missing description
