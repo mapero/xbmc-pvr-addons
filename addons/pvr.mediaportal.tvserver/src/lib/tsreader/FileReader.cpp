@@ -28,8 +28,8 @@
 
 #include "FileReader.h"
 #include "client.h" //for XBMC->Log
-#include "os-dependent.h"
 #include <algorithm> //std::min, std::max
+#include "platform/util/timeutils.h" // for usleep
 
 using namespace ADDON;
 using namespace PLATFORM;
@@ -111,7 +111,7 @@ long FileReader::OpenFile()
     if ( m_hFile.Open(m_pFileName, READ_CHUNKED) )
       break;
 
-    Sleep(20);
+    usleep(20000);
   }
   while(--Tmo);
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "platform/os.h"
-#include "libdvblinkremote\src\dvblinkremote.h"
-#include "libdvblinkremote\src\curlhttpclient.h"
+#include "libdvblinkremote\dvblinkremote.h"
+#include "libdvblinkremote\curlhttpclient.h"
 #include "xbmc_pvr_types.h"
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
