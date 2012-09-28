@@ -72,7 +72,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!PVR->RegisterMe(hdl))
     return ADDON_STATUS_UNKNOWN;
 
-  XBMC->Log(LOG_DEBUG, "%s - Creating the PVR demo add-on", __FUNCTION__);
+  XBMC->Log(LOG_DEBUG, "%s - Creating the PVR DVBlink add-on", __FUNCTION__);
 
   m_CurStatus     = ADDON_STATUS_UNKNOWN;
   g_strUserPath   = pvrprops->strUserPath;
