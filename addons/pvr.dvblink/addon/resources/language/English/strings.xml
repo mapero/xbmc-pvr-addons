@@ -8,6 +8,7 @@
 	<string id="30031">Stream type</string>
 	<string id="30045">Username</string>
 	<string id="30046">Password</string>	
+	<string id="30047">Use channel handle instead of client id</string>
     <!-- category labels -->
     <string id="30040">Connection</string>
     <string id="30030">Stream</string>

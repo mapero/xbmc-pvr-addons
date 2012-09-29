@@ -42,11 +42,12 @@ enum DVBLINK_STREAMTYPE {HTTP=0,RTP=1,UDP=2,hls =3, asf=4};
 #define DEFAULT_CLIENTNAME			  "xbmc"
 #define DEFAULT_USERNAME			  ""
 #define DEFAULT_PASSWORD			  ""
+#define DEFAULT_USECHLHANDLE		  true
 
 /* Client Settings */
 extern std::string  g_szclientname;
 extern std::string  g_szHostname;
-extern long          g_iPort;
+extern long         g_lPort;
 extern int          g_iConnectTimeout;
 extern DVBLINK_STREAMTYPE  g_szStreamType;
 extern std::string  g_szUsername;

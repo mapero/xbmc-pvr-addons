@@ -289,7 +289,7 @@ PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 
 const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel)
 {
-		PLATFORM::CLockObject critsec(m_mutex);
+	PLATFORM::CLockObject critsec(m_mutex);
 	StreamRequest * streamRequest = NULL;
  	switch(streamtype)
 	{
@@ -310,10 +310,18 @@ const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel)
 	return stream->GetUrl().c_str();
 }
 
-void DVBLinkClient::StopStreaming()
+void DVBLinkClient::StopStreaming(bool bUseChlHandle)
 {
 	PLATFORM::CLockObject critsec(m_mutex);
-	StopStreamRequest * request = new StopStreamRequest(clientname);
+	StopStreamRequest * request;
+
+	if (bUseChlHandle) {
+		request = new StopStreamRequest(stream->GetChannelHandle());
+	}
+	else {
+		request = new StopStreamRequest(clientname);
+	}
+
 	DVBLinkRemoteStatusCode status;
 	if ((status = dvblinkRemoteCommunication->StopChannel(*request)) != DVBLINK_REMOTE_STATUS_OK) {
 		XBMC->Log(LOG_ERROR, "Could not stop stream");
