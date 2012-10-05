@@ -34,7 +34,7 @@ public:
 	PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
 	bool GetStatus();
 	const char * GetLiveStreamURL(const PVR_CHANNEL &channel);
-	void StopStreaming();
+	void StopStreaming(bool bUseChlHandle);
 private:
 
 	CurlHttpClient* httpClient; 

@@ -42,14 +42,14 @@ std::string g_strClientPath           = "";
 
 DVBLinkClient* dvblinkclient = NULL;
 
-std::string g_szHostname           = DEFAULT_HOST;                  ///< The Host name or IP of the DVBLink Server
-long         g_iPort                = DEFAULT_PORT;                  ///< The DVBLink Connect Server listening port (default: 8080)
-int         g_iConnectTimeout      = DEFAULT_TIMEOUT;               ///< The Socket connection timeout
-DVBLINK_STREAMTYPE g_szStreamType   = DEFAULT_STREAMTYPE;          ///< Stream type used by video stream
-std::string g_szclientname			= DEFAULT_CLIENTNAME;			///< Name of dvblink client
-std::string  g_szUsername			= DEFAULT_USERNAME;				///< Username
-std::string  g_szPassword			= DEFAULT_PASSWORD;				///< Password
-
+std::string g_szHostname            = DEFAULT_HOST;                  ///< The Host name or IP of the DVBLink Server
+long        g_lPort                 = DEFAULT_PORT;                  ///< The DVBLink Connect Server listening port (default: 8080)
+int         g_iConnectTimeout       = DEFAULT_TIMEOUT;               ///< The Socket connection timeout
+DVBLINK_STREAMTYPE g_eStreamType    = DEFAULT_STREAMTYPE;            ///< Stream type used by video stream
+std::string g_szclientname			= DEFAULT_CLIENTNAME;			 ///< Name of dvblink client
+std::string g_szUsername			= DEFAULT_USERNAME;				 ///< Username
+std::string g_szPassword			= DEFAULT_PASSWORD;				 ///< Password
+bool g_bUseChlHandle                = DEFAULT_USECHLHANDLE;          ///< Use channel handle instead of client id
 
 CHelper_libXBMC_addon *XBMC           = NULL;
 CHelper_libXBMC_pvr   *PVR            = NULL;
@@ -72,7 +72,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!PVR->RegisterMe(hdl))
     return ADDON_STATUS_UNKNOWN;
 
-  XBMC->Log(LOG_DEBUG, "%s - Creating the PVR demo add-on", __FUNCTION__);
+  XBMC->Log(LOG_DEBUG, "%s - Creating the PVR DVBlink add-on", __FUNCTION__);
 
   m_CurStatus     = ADDON_STATUS_UNKNOWN;
   g_strUserPath   = pvrprops->strUserPath;
@@ -96,9 +96,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 	  g_szHostname = DEFAULT_HOST;
   }
 
-  
-  
-
   /* Read setting "client" from settings.xml */
   if (XBMC->GetSetting("client", buffer))
   {	  
@@ -109,7 +106,6 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 	  XBMC->Log(LOG_ERROR, "Couldn't get 'clientname' setting, falling back to 'xbmc' as default");
 	  g_szclientname = DEFAULT_CLIENTNAME;
   }
-
 
   /* Read setting "username" from settings.xml */
   if (XBMC->GetSetting("username", buffer))
@@ -134,22 +130,20 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   }
 
   /* Read setting "streamtype" from settings.xml */
-  if (!XBMC->GetSetting("streamtype", &g_szStreamType))
+  if (!XBMC->GetSetting("streamtype", &g_eStreamType))
   {
 	  /* If setting is unknown fallback to defaults */
 	  XBMC->Log(LOG_ERROR, "Couldn't get 'streamtype' setting, falling back to 'http' as default");
-	  g_szStreamType = DEFAULT_STREAMTYPE;
+	  g_eStreamType = DEFAULT_STREAMTYPE;
   }
 
-
   /* Read setting "port" from settings.xml */
-  if (!XBMC->GetSetting("port", &g_iPort))
+  if (!XBMC->GetSetting("port", &g_lPort))
   {
 	  /* If setting is unknown fallback to defaults */
 	  XBMC->Log(LOG_ERROR, "Couldn't get 'port' setting, falling back to '8080' as default");
-	  g_iPort = DEFAULT_PORT;
+	  g_lPort = DEFAULT_PORT;
   }
-
 
   /* Read setting "timeout" from settings.xml */
   if (!XBMC->GetSetting("timeout", &g_iConnectTimeout))
@@ -159,13 +153,18 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 	  g_iConnectTimeout = DEFAULT_TIMEOUT;
   }
 
+  /* Read setting "ch_handle" from settings.xml */
+  if (!XBMC->GetSetting("ch_handle", &g_bUseChlHandle))
+  {
+	  /* If setting is unknown fallback to defaults */
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'ch_handle' setting, falling back to 'true' as default");
+	  g_bUseChlHandle = DEFAULT_USECHLHANDLE;
+  }
 
   /* Log the current settings for debugging purposes */
-  XBMC->Log(LOG_DEBUG, "settings: host='%s', port=%i, timeout=%i", g_szHostname.c_str(), g_iPort, g_iConnectTimeout);
-
-
+  XBMC->Log(LOG_DEBUG, "settings: streamtype='%i' host='%s', port=%i, timeout=%i", g_eStreamType, g_szHostname.c_str(), g_lPort, g_iConnectTimeout);
   
-  dvblinkclient = new DVBLinkClient(XBMC,PVR,g_szStreamType, g_szclientname, g_szHostname, g_iPort, g_szUsername,g_szPassword);
+  dvblinkclient = new DVBLinkClient(XBMC,PVR,g_eStreamType, g_szclientname, g_szHostname, g_lPort, g_szUsername,g_szPassword);
 
   m_CurStatus = ADDON_STATUS_OK;
   m_bCreated = true;
@@ -234,22 +233,22 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 		if (tmp_sPassword != g_szPassword)
 			return ADDON_STATUS_NEED_RESTART;
 	}
-
 	else if (str == "streamtype")
 	{
-		DVBLINK_STREAMTYPE tmp_sStreamtype;
-		XBMC->Log(LOG_INFO, "Changed Setting 'streamtype' from %i to %i", g_szStreamType, (const DVBLINK_STREAMTYPE *) settingValue);
-		tmp_sStreamtype = g_szStreamType;
-		g_szStreamType = *((const DVBLINK_STREAMTYPE *)settingValue);
-		if (tmp_sStreamtype != g_szStreamType)
+		DVBLINK_STREAMTYPE tmp_eStreamtype;
+		XBMC->Log(LOG_INFO, "Changed Setting 'streamtype' from %i to %i", g_eStreamType, *(const DVBLINK_STREAMTYPE *) settingValue);
+		tmp_eStreamtype = g_eStreamType;
+		g_eStreamType = *((const DVBLINK_STREAMTYPE *)settingValue);
+		if (tmp_eStreamtype != g_eStreamType)
 			return ADDON_STATUS_NEED_RESTART;
 	}
 	else if (str == "port")
 	{
-		XBMC->Log(LOG_INFO, "Changed Setting 'port' from %u to %u", g_iPort, *(int*) settingValue);
-		if (g_iPort != *(int*) settingValue)
+		XBMC->Log(LOG_INFO, "Changed Setting 'port' from %i to %i", g_lPort, *(int*) settingValue);
+		if (g_lPort != (long)(*(int*) settingValue))
 		{
-			g_iPort = *(int*) settingValue;
+			g_lPort = (long)(*(int*) settingValue);
+			XBMC->Log(LOG_INFO, "Changed Setting 'port' to %i", g_lPort);
 			return ADDON_STATUS_NEED_RESTART;
 		}
 	}
@@ -258,8 +257,11 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 		XBMC->Log(LOG_INFO, "Changed setting 'timeout' from %u to %u", g_iConnectTimeout, *(int*) settingValue);
 		g_iConnectTimeout = *(int*) settingValue;
 	}
-
-
+	else if (str == "ch_handle")
+	{
+		XBMC->Log(LOG_INFO, "Changed Setting 'ch_handle' from %u to %u", g_bUseChlHandle, *(int*) settingValue);
+		g_bUseChlHandle = *(bool*) settingValue;
+	}
 
 	return ADDON_STATUS_OK;
 
@@ -382,7 +384,7 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
 
 void CloseLiveStream(void)
 {
-  dvblinkclient->StopStreaming();
+  dvblinkclient->StopStreaming(g_bUseChlHandle);
 }
 
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
