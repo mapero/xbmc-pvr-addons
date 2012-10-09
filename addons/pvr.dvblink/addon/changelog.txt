@@ -1,3 +1,6 @@
+[B]0.0.5[/B]
+Fixed: Bug where dvblink port from setting was not used
+
 [B]0.0.4[/B]
 Fixed: EPG data from when using MCE recorder
 Added: Preliminary (Have not been tested) support for transcoding

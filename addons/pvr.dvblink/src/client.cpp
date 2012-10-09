@@ -218,7 +218,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   /* Log the current settings for debugging purposes */
   XBMC->Log(LOG_DEBUG, "settings: streamtype='%i' host='%s', port=%i, timeout=%i", g_eStreamType, g_szHostname.c_str(), g_lPort, g_iConnectTimeout);
   
-  dvblinkclient = new DVBLinkClient(XBMC,PVR, g_szclientname, g_szHostname, 8080, g_szUsername,g_szPassword);
+  dvblinkclient = new DVBLinkClient(XBMC,PVR, g_szclientname, g_szHostname, g_lPort, g_szUsername,g_szPassword);
 
   m_CurStatus = ADDON_STATUS_OK;
   m_bCreated = true;
