@@ -2,16 +2,15 @@
 #include "..\util\StdString.h"
 
 
-DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *PVR,DVBLINK_STREAMTYPE streamtype,std::string clientname, std::string hostname, long port, std::string username, std::string password)
+DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *PVR,std::string clientname, std::string hostname, long port, std::string username, std::string password)
 {
 	this->PVR = PVR;
 	this->XBMC = XBMC;
-	this->streamtype = streamtype;
 	this->clientname = clientname;
 	this->hostname = hostname;
 	connected = false;
 	httpClient = new CurlHttpClient();
-	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), port, username.c_str(), password.c_str());
+	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), 8080, username.c_str(), password.c_str());
 
 	DVBLinkRemoteStatusCode status;
 	channels = NULL;
@@ -25,9 +24,10 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 
 	if ((status = dvblinkRemoteCommunication->GetChannels(*request, *channels)) == DVBLINK_REMOTE_STATUS_OK) {
 		connected = true;
+		XBMC->Log(LOG_INFO, "Connected to DVBLink Server");
 	}else
 	{
-		XBMC->Log(LOG_ERROR, "Could not get channels from DVBLink Server '%s' on port '%i'", hostname, port);
+		XBMC->Log(LOG_ERROR, "Could not get channels from DVBLink Server '%s' on port '%i'", hostname,port);
 	}
 	delete(request);
 }
@@ -57,7 +57,7 @@ PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 			xbmcChannel.bIsRadio = false;
 			xbmcChannel.iChannelNumber =channel->Number;
 			xbmcChannel.iEncryptionSystem = 0;
-			xbmcChannel.iUniqueId = channel->GetDvbLinkID();
+			xbmcChannel.iUniqueId = atoi(channel->GetID().c_str());
 			PVR_STRCPY(xbmcChannel.strChannelName,channel->GetName().c_str());
 			CStdString stream;
 			if(channel->Type == RD_CHANNEL_RADIO)
@@ -133,11 +133,11 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 	DVBLinkRemoteStatusCode status;
 	AddScheduleRequest * addScheduleRequest = NULL;
 	char channelId [33];
-	_itoa (timer.iClientChannelUid,channelId,10);
+	PVR_INT2STR(channelId,timer.iClientChannelUid);
 	if (timer.iEpgUid != 0)
 	{
 		char programId [33];
-		_itoa (timer.iEpgUid,programId,10);
+		PVR_INT2STR(programId,timer.iEpgUid);
 		addScheduleRequest = new AddScheduleByEpgRequest(channelId,programId,timer.bIsRepeating);
 	}else{
 		
@@ -159,7 +159,8 @@ PVR_ERROR DVBLinkClient::DeleteTimer(const PVR_TIMER &timer)
 	PLATFORM::CLockObject critsec(m_mutex);
 	DVBLinkRemoteStatusCode status;
 	char scheduleId [33];
-	_itoa (timer.iClientIndex,scheduleId,10);
+	PVR_INT2STR(scheduleId,timer.iClientIndex);
+	//_itoa (timer.iClientIndex,scheduleId,10);
 	
 	RemoveScheduleRequest * removeSchedule = new RemoveScheduleRequest(scheduleId);
 
@@ -287,19 +288,49 @@ PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 	return result;
 }
 
-const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel)
+Channel * DVBLinkClient::FindChannelByChannelID(const std::string& channelId)
+{
+
+	for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
+	{
+		Channel* channel = (*it);
+		if (channelId.compare(channel->GetID()) == 0)
+		{
+			return channel;
+		}
+	}
+
+	return NULL;
+}
+const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel, DVBLINK_STREAMTYPE streamtype, int width, int height, int bitrate, std::string audiotrack)
 {
 	PLATFORM::CLockObject critsec(m_mutex);
 	StreamRequest * streamRequest = NULL;
+	TranscodingOptions * options = new TranscodingOptions(width, height);
+	options->SetBitrate(bitrate);
+	options->SetAudioTrack(audiotrack);
+	char channelId[33];
+	PVR_INT2STR(channelId,channel.iUniqueId);
+	Channel * c = FindChannelByChannelID(channelId);
+	DVBLinkRemoteStatusCode status;
  	switch(streamtype)
 	{
 	case HTTP:
-		streamRequest = new RawHttpStreamRequest(hostname.c_str(), channel.iUniqueId, clientname.c_str());
-		DVBLinkRemoteStatusCode status;
-		if ((status = dvblinkRemoteCommunication->PlayChannel(*streamRequest, *stream)) != DVBLINK_REMOTE_STATUS_OK) {
-			XBMC->Log(LOG_ERROR,"Could not get stream for channel %i", channel.iUniqueId);
-		}
+		streamRequest = new RawHttpStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str());
 		break;
+	case RTP:
+		streamRequest = new RealTimeTransportProtocolStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		break;
+	case HLS:
+		streamRequest = new HttpLiveStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		break;
+	case ASF:
+		streamRequest = new WindowsMediaStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		break;
+	}
+
+	if ((status = dvblinkRemoteCommunication->PlayChannel(*streamRequest, *stream)) != DVBLINK_REMOTE_STATUS_OK) {
+		XBMC->Log(LOG_ERROR,"Could not get stream for channel %i", channel.iUniqueId);
 	}
 
 	if (streamRequest != NULL)
@@ -388,7 +419,7 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
 	char channelId [33];
-	_itoa (channel.iUniqueId,channelId,10);
+	PVR_INT2STR(channelId,channel.iUniqueId);
 	EpgSearchRequest* epgSearchRequest = new EpgSearchRequest(channelId, iStart, iEnd);
 	EpgSearchResult* epgSearchResult = new EpgSearchResult();
 	DVBLinkRemoteStatusCode status;

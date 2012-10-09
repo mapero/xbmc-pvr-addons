@@ -32,7 +32,7 @@ extern bool                          m_bCreated;
 
 
 
-enum DVBLINK_STREAMTYPE {HTTP=0,RTP=1,UDP=2,hls =3, asf=4};
+enum DVBLINK_STREAMTYPE {HTTP=0,RTP=1,HLS =2, ASF=3};
 
 /*  Client Settings default values */
 #define DEFAULT_HOST                  "127.0.0.1"
@@ -43,6 +43,11 @@ enum DVBLINK_STREAMTYPE {HTTP=0,RTP=1,UDP=2,hls =3, asf=4};
 #define DEFAULT_USERNAME			  ""
 #define DEFAULT_PASSWORD			  ""
 #define DEFAULT_USECHLHANDLE		  true
+//#define DEFAULT_USETRANSCODING		  false
+#define DEFAULT_HEIGHT				  720
+#define DEFAULT_WIDTH				  576
+#define DEFAULT_BITRATE				  512
+#define DEFAULT_AUDIOTRACK			  "eng"
 
 /* Client Settings */
 extern std::string  g_szclientname;
@@ -52,6 +57,14 @@ extern int          g_iConnectTimeout;
 extern DVBLINK_STREAMTYPE  g_szStreamType;
 extern std::string  g_szUsername;
 extern std::string  g_szPassword;
+
+//extern bool  g_bUseTranscoding;
+extern int   g_iHeight;
+extern int	 g_iWidth;
+extern int	 g_iBitrate;
+extern std::string  g_szAudiotrack;
+
+
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr          *PVR;

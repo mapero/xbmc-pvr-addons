@@ -1,3 +1,11 @@
+[B]0.0.4[/B]
+Fixed: EPG data from when using MCE recorder
+Added: Preliminary (Have not been tested) support for transcoding
+Changed: Reordered settings
+
+[B]0.0.3[/B]
+Added: Fix for using channel handle instead of client id when stopping channels
+
 [B]0.0.2[/B]
 Added: Scheduling of recordings using EPG based timers
 Added: Enabled removal of timers

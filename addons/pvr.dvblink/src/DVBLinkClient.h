@@ -20,7 +20,7 @@ using namespace ADDON;
 class DVBLinkClient
 {
 public:
-	DVBLinkClient(CHelper_libXBMC_addon *XBMC, CHelper_libXBMC_pvr *PVR, DVBLINK_STREAMTYPE streamtype, std::string clientname, std::string hostname, long port, std::string username, std::string password);
+	DVBLinkClient(CHelper_libXBMC_addon *XBMC, CHelper_libXBMC_pvr *PVR, std::string clientname, std::string hostname, long port, std::string username, std::string password);
 	~DVBLinkClient(void);
 	int GetChannelsAmount();
 	PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
@@ -33,7 +33,7 @@ public:
 	PVR_ERROR AddTimer(const PVR_TIMER &timer);
 	PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
 	bool GetStatus();
-	const char * GetLiveStreamURL(const PVR_CHANNEL &channel);
+	const char * GetLiveStreamURL(const PVR_CHANNEL &channel, DVBLINK_STREAMTYPE streamtype, int width, int height, int bitrate, std::string audiotrack);
 	void StopStreaming(bool bUseChlHandle);
 private:
 
@@ -46,16 +46,18 @@ private:
 	long timerCount;
 	long recordingCount;
 
-	 PLATFORM::CMutex        m_mutex;
+	PLATFORM::CMutex        m_mutex;
 
 	CHelper_libXBMC_pvr *PVR;
 	CHelper_libXBMC_addon  *XBMC; 
 	DVBLINK_STREAMTYPE streamtype;
 	std::string clientname;
 	std::string hostname;
+
 	void SetEPGGenre(Program *program, EPG_TAG *tag);
 	std::string GetBuildInRecorderObjectID();
 	std::string GetRecordedTVByDateObjectID(const std::string& buildInRecoderObjectID);
+	Channel * FindChannelByChannelID(const std::string& channelId);
 };
 
 /*!
@@ -63,3 +65,4 @@ private:
  */
 #define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
 #define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
+#define PVR_INT2STR(dest, source) sprintf(dest, "%d", source)

@@ -51,6 +51,13 @@ std::string g_szUsername			= DEFAULT_USERNAME;				 ///< Username
 std::string g_szPassword			= DEFAULT_PASSWORD;				 ///< Password
 bool g_bUseChlHandle                = DEFAULT_USECHLHANDLE;          ///< Use channel handle instead of client id
 
+//bool  g_bUseTranscoding				= DEFAULT_USETRANSCODING;		 ///< Use transcoding
+int   g_iHeight						= DEFAULT_HEIGHT;				 ///< Height of stream when using transcoding
+int	 g_iWidth						= DEFAULT_WIDTH;				 ///< Width of stream when using transcoding
+int	 g_iBitrate						= DEFAULT_BITRATE;				 ///< Bitrate of stream when using transcoding
+std::string  g_szAudiotrack			= DEFAULT_AUDIOTRACK;			 ///< Audiotrack to include in stream when using transcoding
+
+
 CHelper_libXBMC_addon *XBMC           = NULL;
 CHelper_libXBMC_pvr   *PVR            = NULL;
 
@@ -161,10 +168,57 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 	  g_bUseChlHandle = DEFAULT_USECHLHANDLE;
   }
 
+  /* Read setting "transcoding" from settings.xml */
+ /*
+  if (!XBMC->GetSetting("transcoding", &g_bUseTranscoding))
+  {
+
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'Transcoding' setting, falling back to 'false' as default");
+	  g_bUseTranscoding = DEFAULT_USETRANSCODING;
+	  g_eStreamType = DEFAULT_STREAMTYPE;
+  }*/
+
+  /* Read setting "height" from settings.xml */
+  if (!XBMC->GetSetting("height", &g_iHeight))
+  {
+	  /* If setting is unknown fallback to defaults */
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'Height' setting, falling back to '720' as default");
+	  g_iHeight = DEFAULT_HEIGHT;
+  }
+
+  /* Read setting "width" from settings.xml */
+  if (!XBMC->GetSetting("width", &g_iWidth))
+  {
+	  /* If setting is unknown fallback to defaults */
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'Width' setting, falling back to '576' as default");
+	  g_iWidth = DEFAULT_WIDTH;
+  }
+
+  /* Read setting "bitrate" from settings.xml */
+  if (!XBMC->GetSetting("bitrate", &g_iBitrate))
+  {
+	  /* If setting is unknown fallback to defaults */
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'Biterate' setting, falling back to '512' as default");
+	  g_iBitrate = DEFAULT_BITRATE;
+  }
+
+  /* Read setting "audiotrack" from settings.xml */
+  if (XBMC->GetSetting("audiotrack", buffer))
+  {	  
+	  g_szAudiotrack = buffer;
+  }else
+  {
+	  /* If setting is unknown fallback to defaults */
+	  XBMC->Log(LOG_ERROR, "Couldn't get 'Audiotrack' setting, falling back to 'eng' as default");
+	  g_szAudiotrack = DEFAULT_AUDIOTRACK;
+  }
+
+
+
   /* Log the current settings for debugging purposes */
   XBMC->Log(LOG_DEBUG, "settings: streamtype='%i' host='%s', port=%i, timeout=%i", g_eStreamType, g_szHostname.c_str(), g_lPort, g_iConnectTimeout);
   
-  dvblinkclient = new DVBLinkClient(XBMC,PVR,g_eStreamType, g_szclientname, g_szHostname, g_lPort, g_szUsername,g_szPassword);
+  dvblinkclient = new DVBLinkClient(XBMC,PVR, g_szclientname, g_szHostname, 8080, g_szUsername,g_szPassword);
 
   m_CurStatus = ADDON_STATUS_OK;
   m_bCreated = true;
@@ -262,7 +316,37 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 		XBMC->Log(LOG_INFO, "Changed Setting 'ch_handle' from %u to %u", g_bUseChlHandle, *(int*) settingValue);
 		g_bUseChlHandle = *(bool*) settingValue;
 	}
-
+/*
+	else if (str == "transcoding")
+	{
+		XBMC->Log(LOG_INFO, "Changed Setting 'transcoding' from %u to %u", g_bUseTranscoding, *(int*) settingValue);
+		g_bUseTranscoding = *(bool*) settingValue;
+	}
+	*/
+	else if (str == "height")
+	{
+		XBMC->Log(LOG_INFO, "Changed Setting 'height' from %u to %u", g_iHeight, *(int*) settingValue);
+		g_iHeight = *(int*) settingValue;
+	}
+	else if (str == "width")
+	{
+		XBMC->Log(LOG_INFO, "Changed Setting 'width' from %u to %u", g_iWidth, *(int*) settingValue);
+		g_iWidth = *(int*) settingValue;
+	}
+	else if (str == "bitrate")
+	{
+		XBMC->Log(LOG_INFO, "Changed Setting 'bitrate' from %u to %u", g_iBitrate, *(int*) settingValue);
+		g_iBitrate = *(int*) settingValue;
+	}
+	else if (str == "audiotrack")
+	{
+		string tmp_sAudiotrack;
+		XBMC->Log(LOG_INFO, "Changed Setting 'audiotrack' from %s to %s", g_szAudiotrack.c_str(), (const char*) settingValue);
+		tmp_sAudiotrack = g_szAudiotrack;
+		g_szAudiotrack = (const char*) settingValue;
+		if (tmp_sAudiotrack != g_szAudiotrack)
+			return ADDON_STATUS_NEED_RESTART;
+	}
 	return ADDON_STATUS_OK;
 
 }
@@ -343,7 +427,6 @@ PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time
 {
   if (dvblinkclient)
 	  return dvblinkclient->GetEPGForChannel(handle, channel, iStart, iEnd);
-  //  return m_data->GetEPGForChannel(handle, channel, iStart, iEnd);
 
   return PVR_ERROR_SERVER_ERROR;
 }
@@ -390,7 +473,7 @@ void CloseLiveStream(void)
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
 { 
 
-	return dvblinkclient->GetLiveStreamURL(channel);
+	return dvblinkclient->GetLiveStreamURL(channel, g_eStreamType, g_iWidth, g_iHeight, g_iBitrate, g_szAudiotrack);
 }
 int GetTimersAmount(void) { 
 	if (dvblinkclient)
