@@ -73,7 +73,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!XBMC->RegisterMe(hdl))
   {
     SAFE_DELETE(XBMC);
-    return ADDON_STATUS_UNKNOWN;
+    return ADDON_STATUS_PERMANENT_FAILURE;
   }
 
   PVR = new CHelper_libXBMC_pvr;
@@ -81,7 +81,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   {
     SAFE_DELETE(PVR);
     SAFE_DELETE(XBMC);
-    return ADDON_STATUS_UNKNOWN;
+    return ADDON_STATUS_PERMANENT_FAILURE;
   }
 
 #ifdef TSREADER
@@ -319,7 +319,6 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES *pCapabilities)
 {
   XBMC->Log(LOG_DEBUG, "->GetProperties()");
 
-  //pCapabilities->bSupportsTimeshift          = true; // removed in Frodo PVR API
   pCapabilities->bSupportsEPG                = true;
   pCapabilities->bSupportsRecordings         = true;
   pCapabilities->bSupportsTimers             = true;
@@ -588,6 +587,28 @@ long long LengthRecordedStream(void)
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
 {
   return g_client->GetLiveStreamURL(channel);
+}
+
+bool CanPauseStream(void)
+{
+  if (g_client)
+    return g_client->CanPauseAndSeek();
+
+  return false;
+}
+
+void PauseStream(bool bPaused)
+{
+  if (g_client)
+    g_client->PauseStream(bPaused);
+}
+
+bool CanSeekStream(void)
+{
+  if (g_client)
+    return g_client->CanPauseAndSeek();
+
+  return false;
 }
 
 /** UNUSED API FUNCTIONS */

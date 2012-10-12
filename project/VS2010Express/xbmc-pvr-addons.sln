@@ -23,6 +23,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.njoy", "..\..\addons\pv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjsoncpp", "..\..\lib\jsoncpp\project\VS2010Express\libjsoncpp.vcxproj", "{F3A72A50-E295-49BA-ACD7-8696907E0351}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.vuplus", "..\..\addons\pvr.vuplus\project\VS2010Express\pvr.vuplus.vcxproj", "{848DCDD6-7142-4507-A75A-6872A9256F3F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BDC7D21D-9FD9-41AA-BEC8-8B70E1448C50} = {BDC7D21D-9FD9-41AA-BEC8-8B70E1448C50}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.nextpvr", "..\..\addons\pvr.nextpvr\project\VS2010Express\XBMC_NextPVR.vcxproj", "{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.dvblink", "..\..\addons\pvr.dvblink\project\VS2010Express\pvrclient_dvblink.vcxproj", "{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}"
 EndProject
 Global
@@ -113,6 +120,14 @@ Global
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release (DirectX)|Win32.Build.0 = Release (DirectX)|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release|Win32.ActiveCfg = Release|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release|Win32.Build.0 = Release|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.Build.0 = Debug|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.ActiveCfg = Release|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.Build.0 = Release|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.Build.0 = Debug|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.ActiveCfg = Release|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

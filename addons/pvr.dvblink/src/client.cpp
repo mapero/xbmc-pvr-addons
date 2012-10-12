@@ -22,6 +22,7 @@
 #include "client.h"
 #include "xbmc_pvr_dll.h"
 #include "DVBLinkClient.h"
+#include "..\util\util.h"
 
 //#include "curl/curl.h"
 
@@ -73,11 +74,18 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
   XBMC = new CHelper_libXBMC_addon;
   if (!XBMC->RegisterMe(hdl))
-    return ADDON_STATUS_UNKNOWN;
+  {
+	SAFE_DELETE(XBMC);
+    return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   PVR = new CHelper_libXBMC_pvr;
   if (!PVR->RegisterMe(hdl))
-    return ADDON_STATUS_UNKNOWN;
+  {
+	SAFE_DELETE(PVR);
+	SAFE_DELETE(XBMC);
+    return ADDON_STATUS_PERMANENT_FAILURE;
+  }
 
   XBMC->Log(LOG_DEBUG, "%s - Creating the PVR DVBlink add-on", __FUNCTION__);
 
@@ -600,4 +608,7 @@ int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return -1; 
 void DemuxAbort(void) {}
 DemuxPacket* DemuxRead(void) { return NULL; }
 unsigned int GetChannelSwitchDelay(void) { return 0; }
+void PauseStream(bool bPaused) {}
+bool CanPauseStream(void) { return false; }
+bool CanSeekStream(void) { return false; }
 }

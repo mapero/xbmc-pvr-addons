@@ -1,8 +1,10 @@
 SUBDIRS = pvr.demo \
           pvr.hts \
           pvr.mediaportal.tvserver \
+          pvr.nextpvr \
           pvr.vdr.vnsi \
-          pvr.njoy
+          pvr.njoy \
+          pvr.vuplus
 
 clean:
 	-rm -f *.zip
