@@ -8,6 +8,7 @@
 #include "libXBMC_pvr.h"
 #include "client.h"
 #include "..\threads\mutex.h"
+#include <map>
 
 
 using namespace dvblinkremote;
@@ -35,13 +36,18 @@ public:
 	bool GetStatus();
 	const char * GetLiveStreamURL(const PVR_CHANNEL &channel, DVBLINK_STREAMTYPE streamtype, int width, int height, int bitrate, std::string audiotrack);
 	void StopStreaming(bool bUseChlHandle);
+	int GetCurrentChannelId();
+	long GetFreeDiskSpace();
+	long GetTotalDiskSpace();
+
 private:
 
 	CurlHttpClient* httpClient; 
 	IDVBLinkRemoteConnection* dvblinkRemoteCommunication;
 	bool connected;
-
+	std::map<int,Channel *> channelMap;
 	Stream  * stream;
+	int currentChannelId;
 	ChannelList* channels;
 	long timerCount;
 	long recordingCount;
@@ -57,12 +63,14 @@ private:
 	void SetEPGGenre(Program *program, EPG_TAG *tag);
 	std::string GetBuildInRecorderObjectID();
 	std::string GetRecordedTVByDateObjectID(const std::string& buildInRecoderObjectID);
-	Channel * FindChannelByChannelID(const std::string& channelId);
+	int GetInternalUniqueIdFromChannelId(const std::string& channelId);
 };
 
 /*!
- * @brief PVR macros for string exchange
+ * @brief PVR macros
  */
 #define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
 #define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
 #define PVR_INT2STR(dest, source) sprintf(dest, "%d", source)
+#define PVR_STR2INT(dest, source) dest = atoi(source)
+#define SAFE_DELETE(p)       do { delete (p);     (p)=NULL; } while (0)

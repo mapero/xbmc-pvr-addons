@@ -85,7 +85,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   g_strUserPath   = pvrprops->strUserPath;
   g_strClientPath = pvrprops->strClientPath;
 
-  //char buffer[1024];
+
   char * buffer = (char*) malloc(128);
   buffer[0] = 0; 
 
@@ -400,27 +400,36 @@ const char *GetBackendName(void)
 	//DVBLinkRemote::GetCopyrightNotice(copyright);
 	//DVBLinkRemote::GetVersion(version);
 	
-  static const char *strBackendName = "DVBLink pvr add-on";
+  static const char *strBackendName = "DVBLink Connect! Server";
   return strBackendName;
 }
 
 const char *GetBackendVersion(void)
 {
-  static  const char * strBackendVersion = "0.1";
+  static  const char * strBackendVersion = "0.2";
   return strBackendVersion;
 }
 
 const char *GetConnectionString(void)
 {
-  static  const char *strConnectionString = "connected";
-  return strConnectionString;
+  return g_szHostname.c_str();
 }
 
 PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
 {
-  *iTotal = 1024 * 1024 * 1024;
-  *iUsed  = 0;
-  return PVR_ERROR_NO_ERROR;
+ if (dvblinkclient)
+ {
+	 *iTotal = dvblinkclient->GetTotalDiskSpace();
+	 *iUsed  = (*iTotal) - dvblinkclient->GetFreeDiskSpace();
+	 return PVR_ERROR_NO_ERROR;
+ }
+ else
+ {
+	 *iTotal = 0;
+	 *iUsed  = 0;
+	 return PVR_ERROR_SERVER_ERROR;
+ }
+  
 }
 
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
@@ -530,8 +539,9 @@ PVR_ERROR DeleteRecording(const PVR_RECORDING &recording)
 
 int GetCurrentClientChannel(void)
 {
+	if (dvblinkclient)
+		return dvblinkclient->GetCurrentChannelId();
 	return 0;
- // return m_currentChannel.iUniqueId;
 }
 
 bool SwitchChannel(const PVR_CHANNEL &channel)
@@ -543,6 +553,7 @@ bool SwitchChannel(const PVR_CHANNEL &channel)
 
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES* pProperties)
 {
+
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
 

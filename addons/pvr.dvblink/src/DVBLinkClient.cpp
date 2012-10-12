@@ -9,6 +9,7 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 	this->clientname = clientname;
 	this->hostname = hostname;
 	connected = false;
+	currentChannelId = 0;
 	httpClient = new CurlHttpClient();
 	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), 8080, username.c_str(), password.c_str());
 
@@ -23,13 +24,19 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 	channels = new ChannelList();
 
 	if ((status = dvblinkRemoteCommunication->GetChannels(*request, *channels)) == DVBLINK_REMOTE_STATUS_OK) {
+		int iChannelUnique = 0;
+		for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
+		{
+			Channel* channel = (*it);
+			channelMap[++iChannelUnique] = channel;
+		}
 		connected = true;
 		XBMC->Log(LOG_INFO, "Connected to DVBLink Server");
 	}else
 	{
 		XBMC->Log(LOG_ERROR, "Could not get channels from DVBLink Server '%s' on port '%i'", hostname,port);
 	}
-	delete(request);
+	SAFE_DELETE(request);
 }
 
 bool DVBLinkClient::GetStatus()
@@ -39,14 +46,16 @@ bool DVBLinkClient::GetStatus()
 
 int DVBLinkClient::GetChannelsAmount()
 {
-	return channels->size();
+	return channelMap.size();
 }
 
 PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
-	for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
+	for( std::map<int,Channel*>::iterator it=channelMap.begin(); it!=channelMap.end(); ++it)
+	//for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
 	{
-		Channel* channel = (*it);
+		//Channel* channel = (*it);
+		Channel* channel = (*it).second;
 
 		bool isRadio = (channel->Type == RD_CHANNEL_RADIO);
 
@@ -54,10 +63,11 @@ PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 		{
 			PVR_CHANNEL xbmcChannel;
 			memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
-			xbmcChannel.bIsRadio = false;
+			xbmcChannel.bIsRadio = isRadio;
 			xbmcChannel.iChannelNumber =channel->Number;
 			xbmcChannel.iEncryptionSystem = 0;
-			xbmcChannel.iUniqueId = atoi(channel->GetID().c_str());
+			//PVR_STR2INT(xbmcChannel.iUniqueId,channel->GetID().c_str());
+			xbmcChannel.iUniqueId = (*it).first;
 			PVR_STRCPY(xbmcChannel.strChannelName,channel->GetName().c_str());
 			CStdString stream;
 			if(channel->Type == RD_CHANNEL_RADIO)
@@ -79,6 +89,22 @@ int DVBLinkClient::GetTimersAmount()
 	return timerCount;
 }
 
+
+int DVBLinkClient::GetInternalUniqueIdFromChannelId(const std::string& channelId)
+{
+
+	for( std::map<int,Channel*>::iterator it=channelMap.begin(); it!=channelMap.end(); ++it)
+	{
+		Channel * channel = (*it).second;
+		int id = (*it).first;
+		if (channelId.compare(channel->GetID())==0)
+		{
+			return id;
+		}
+	}
+	return 0;
+}
+
 PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 {
 	PVR_ERROR result = PVR_ERROR_FAILED;
@@ -95,9 +121,9 @@ PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 			Schedule* schedule = (Schedule*)*it;
 			PVR_TIMER xbmcTimer;
 			memset(&xbmcTimer, 0, sizeof(PVR_TIMER));
-
-			xbmcTimer.iClientIndex = atoi(schedule->GetID().c_str());
-			xbmcTimer.iClientChannelUid = atoi(schedule->GetChannelID().c_str());
+			PVR_STR2INT(xbmcTimer.iClientIndex, schedule->GetID().c_str());
+			
+			xbmcTimer.iClientChannelUid = GetInternalUniqueIdFromChannelId(schedule->GetChannelID());
 			xbmcTimer.state = PVR_TIMER_STATE_SCHEDULED;
 			if (schedule->Type == EPG)
 			{
@@ -106,7 +132,7 @@ PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 				xbmcTimer.endTime = p.GetStartTime() + p.GetDuration();
 				PVR_STRCPY(xbmcTimer.strTitle,p.GetTitle().c_str());
 				PVR_STRCPY(xbmcTimer.strSummary,p.ShortDescription.c_str());
-				xbmcTimer.iEpgUid = atoi(schedule->GetProgramID().c_str());
+				PVR_STR2INT(xbmcTimer.iEpgUid,schedule->GetProgramID().c_str());
 			}else{
 				xbmcTimer.startTime = schedule->StartTime;
 				xbmcTimer.endTime = schedule->StartTime + schedule->Duration;
@@ -119,8 +145,8 @@ PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 		timerCount = schedules->size();
 		result = PVR_ERROR_NO_ERROR;
 	}
-	delete schedules;
-	delete getSchedulesRequest;
+	SAFE_DELETE(schedules);
+	SAFE_DELETE(getSchedulesRequest);
 	
 	return result;
 }
@@ -148,7 +174,7 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 		PVR->TriggerTimerUpdate();
 		result = PVR_ERROR_NO_ERROR;
 	}
-	delete addScheduleRequest;
+	SAFE_DELETE(addScheduleRequest);
 	
 	return result;
 }
@@ -170,7 +196,7 @@ PVR_ERROR DVBLinkClient::DeleteTimer(const PVR_TIMER &timer)
 		PVR->TriggerTimerUpdate();
 		result = PVR_ERROR_NO_ERROR;
 	}
-	delete removeSchedule;
+	SAFE_DELETE(removeSchedule);
 	return result;
 }
 
@@ -199,8 +225,8 @@ std::string DVBLinkClient::GetBuildInRecorderObjectID()
 
 		}
 	}
-	delete getObjectsRequest;
-	delete getObjectsResult;
+	SAFE_DELETE(getObjectsRequest);
+	SAFE_DELETE(getObjectsResult);
 	return result;
 }
 
@@ -224,8 +250,8 @@ std::string DVBLinkClient::GetRecordedTVByDateObjectID(const std::string& buildI
 		}
 
 	}
-	delete getRecordedTVRequest;
-	delete getRecordedTVResult;
+	SAFE_DELETE(getRecordedTVRequest);
+	SAFE_DELETE(getRecordedTVResult);
 	return result;
 
 }
@@ -242,7 +268,7 @@ PVR_ERROR DVBLinkClient::DeleteRecording(const PVR_RECORDING& recording)
 		 result = PVR_ERROR_NO_ERROR;
 	}
 
-	delete deleteObj;
+	SAFE_DELETE(deleteObj);
 	return result;
 }
 
@@ -283,35 +309,34 @@ PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 		result = PVR_ERROR_NO_ERROR;
 	
 	}
-	delete getRecordedTVRequest;
-	delete getRecordedTVResult;
+	 SAFE_DELETE(getRecordedTVRequest);
+	SAFE_DELETE(getRecordedTVResult);
 	return result;
 }
 
-Channel * DVBLinkClient::FindChannelByChannelID(const std::string& channelId)
+long DVBLinkClient::GetFreeDiskSpace()
 {
-
-	for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
-	{
-		Channel* channel = (*it);
-		if (channelId.compare(channel->GetID()) == 0)
-		{
-			return channel;
-		}
-	}
-
-	return NULL;
+	return GetTotalDiskSpace();
 }
+
+long DVBLinkClient::GetTotalDiskSpace()
+{
+	return 1024 * 1024 * 1024;
+}
+
+int DVBLinkClient::GetCurrentChannelId()
+{
+	return currentChannelId;
+}
+
 const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel, DVBLINK_STREAMTYPE streamtype, int width, int height, int bitrate, std::string audiotrack)
 {
 	PLATFORM::CLockObject critsec(m_mutex);
-	StreamRequest * streamRequest = NULL;
-	TranscodingOptions * options = new TranscodingOptions(width, height);
-	options->SetBitrate(bitrate);
-	options->SetAudioTrack(audiotrack);
-	char channelId[33];
-	PVR_INT2STR(channelId,channel.iUniqueId);
-	Channel * c = FindChannelByChannelID(channelId);
+	StreamRequest* streamRequest = NULL;
+	TranscodingOptions options(width, height);
+	options.SetBitrate(bitrate);
+	options.SetAudioTrack(audiotrack);
+	Channel * c = channelMap[channel.iUniqueId];
 	DVBLinkRemoteStatusCode status;
  	switch(streamtype)
 	{
@@ -319,26 +344,27 @@ const char * DVBLinkClient::GetLiveStreamURL(const PVR_CHANNEL &channel, DVBLINK
 		streamRequest = new RawHttpStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str());
 		break;
 	case RTP:
-		streamRequest = new RealTimeTransportProtocolStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		streamRequest = new RealTimeTransportProtocolStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), options);
 		break;
 	case HLS:
-		streamRequest = new HttpLiveStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		streamRequest = new HttpLiveStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), options);
 		break;
 	case ASF:
-		streamRequest = new WindowsMediaStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), *options);
+		streamRequest = new WindowsMediaStreamRequest(hostname.c_str(), c->GetDvbLinkID(), clientname.c_str(), options);
 		break;
 	}
 
 	if ((status = dvblinkRemoteCommunication->PlayChannel(*streamRequest, *stream)) != DVBLINK_REMOTE_STATUS_OK) {
 		XBMC->Log(LOG_ERROR,"Could not get stream for channel %i", channel.iUniqueId);
+		SAFE_DELETE(streamRequest);
+		return "";
 	}
-
-	if (streamRequest != NULL)
+	else
 	{
-		delete streamRequest;
+		currentChannelId = channel.iUniqueId;
+		SAFE_DELETE(streamRequest);
+		return stream->GetUrl().c_str();
 	}
-
-	return stream->GetUrl().c_str();
 }
 
 void DVBLinkClient::StopStreaming(bool bUseChlHandle)
@@ -357,7 +383,7 @@ void DVBLinkClient::StopStreaming(bool bUseChlHandle)
 	if ((status = dvblinkRemoteCommunication->StopChannel(*request)) != DVBLINK_REMOTE_STATUS_OK) {
 		XBMC->Log(LOG_ERROR, "Could not stop stream");
 	}
-	delete request;
+	SAFE_DELETE(request);
 
 }
 
@@ -418,9 +444,8 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 {
 	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
-	char channelId [33];
-	PVR_INT2STR(channelId,channel.iUniqueId);
-	EpgSearchRequest* epgSearchRequest = new EpgSearchRequest(channelId, iStart, iEnd);
+	Channel * c = channelMap[channel.iUniqueId];
+	EpgSearchRequest* epgSearchRequest = new EpgSearchRequest(c->GetID(), iStart, iEnd);
 	EpgSearchResult* epgSearchResult = new EpgSearchResult();
 	DVBLinkRemoteStatusCode status;
 
@@ -437,7 +462,8 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 				memset(&broadcast, 0, sizeof(EPG_TAG));
 
 				
-				broadcast.iUniqueBroadcastId  = atoi(p->GetID().c_str());
+				PVR_STR2INT(broadcast.iUniqueBroadcastId,p->GetID().c_str() );
+	
 				broadcast.strTitle = p->GetTitle().c_str();
 
 				broadcast.iChannelNumber      = channel.iChannelNumber;
@@ -470,15 +496,16 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 
 	}
 
-	delete(epgSearchRequest);
-	delete(epgSearchResult);
+	SAFE_DELETE(epgSearchRequest);
+	SAFE_DELETE(epgSearchResult);
 
 	return result;
 }
 
 DVBLinkClient::~DVBLinkClient(void)
 {
-	delete dvblinkRemoteCommunication;
-	delete httpClient;
-	delete channels;
+	SAFE_DELETE(dvblinkRemoteCommunication);
+	SAFE_DELETE(httpClient);
+	SAFE_DELETE(channels);
+	SAFE_DELETE(stream);
 }

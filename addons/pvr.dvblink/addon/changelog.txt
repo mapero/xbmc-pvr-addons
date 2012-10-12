@@ -1,3 +1,6 @@
+[B]0.0.6[/B]
+Fixed: Bug where addon did not show channels / EPG when using MCE Recorder
+
 [B]0.0.5[/B]
 Fixed: Bug where dvblink port from setting was not used
 
