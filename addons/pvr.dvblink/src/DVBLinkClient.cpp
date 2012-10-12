@@ -158,8 +158,7 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 	PLATFORM::CLockObject critsec(m_mutex);
 	DVBLinkRemoteStatusCode status;
 	AddScheduleRequest * addScheduleRequest = NULL;
-	char channelId [33];
-	PVR_INT2STR(channelId,timer.iClientChannelUid);
+	std::string channelId = channelMap[timer.iClientChannelUid]->GetID();
 	if (timer.iEpgUid != 0)
 	{
 		char programId [33];
