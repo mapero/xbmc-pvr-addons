@@ -66,7 +66,6 @@ PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 			xbmcChannel.bIsRadio = isRadio;
 			xbmcChannel.iChannelNumber =channel->Number;
 			xbmcChannel.iEncryptionSystem = 0;
-			//PVR_STR2INT(xbmcChannel.iUniqueId,channel->GetID().c_str());
 			xbmcChannel.iUniqueId = (*it).first;
 			PVR_STRCPY(xbmcChannel.strChannelName,channel->GetName().c_str());
 			CStdString stream;
@@ -470,7 +469,8 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 				broadcast.endTime             = p->GetStartTime() + p->GetDuration();
 				broadcast.strPlotOutline      = p->SubTitle.c_str();
 				broadcast.strPlot             = p->ShortDescription.c_str();
-				broadcast.strIconPath         = "";
+				
+				broadcast.strIconPath         = p->Image.c_str();
 				broadcast.iGenreType          = 0;
 				broadcast.iGenreSubType       = 0;
 				broadcast.strGenreDescription = "";
@@ -482,7 +482,7 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 				broadcast.iEpisodeNumber      = p->EpisodeNumber;
 				broadcast.iEpisodePartNumber  = 0;
 				broadcast.strEpisodeName      = "";
-
+				
 				SetEPGGenre(p, &broadcast);
 
 				PVR->TransferEpgEntry(handle, &broadcast);
