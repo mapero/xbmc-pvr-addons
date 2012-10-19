@@ -162,6 +162,8 @@ AC_OUTPUT([Makefile
            lib/jsoncpp/Makefile
            lib/libhts/Makefile
            lib/tinyxml/Makefile
+	   lib/tinyxml2/Makefile
+	   lib/libdvblinkremote/Makefile
            addons/Makefile
            addons/pvr.demo/Makefile
            addons/pvr.fortherecord.argus/Makefile
@@ -170,5 +172,6 @@ AC_OUTPUT([Makefile
            addons/pvr.nextpvr/Makefile
            addons/pvr.njoy/Makefile
            addons/pvr.vuplus/Makefile
+	   addons/pvr.dvblink/Makefile
            addons/pvr.vdr.vnsi/Makefile])
 
