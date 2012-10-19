@@ -4,7 +4,8 @@ SUBDIRS = pvr.demo \
           pvr.nextpvr \
           pvr.vdr.vnsi \
           pvr.njoy \
-          pvr.vuplus
+          pvr.vuplus \
+	  pvr.dvblink
 
 clean:
 	-rm -f *.zip

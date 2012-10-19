@@ -1,5 +1,5 @@
 #include "DVBLinkClient.h"
-#include "..\util\StdString.h"
+#include "platform/util/StdString.h"
 
 
 DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *PVR,std::string clientname, std::string hostname, long port, std::string username, std::string password)
@@ -34,7 +34,7 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 		XBMC->Log(LOG_INFO, "Connected to DVBLink Server");
 	}else
 	{
-		XBMC->Log(LOG_ERROR, "Could not get channels from DVBLink Server '%s' on port '%i'", hostname,port);
+		XBMC->Log(LOG_ERROR, "Could not get channels from DVBLink Server '%s' on port '%i'", hostname.c_str(),port);
 	}
 	SAFE_DELETE(request);
 }

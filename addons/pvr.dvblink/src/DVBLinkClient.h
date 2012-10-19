@@ -1,13 +1,13 @@
 #pragma once
 
 #include "platform/os.h"
-#include "libdvblinkremote\dvblinkremote.h"
-#include "libdvblinkremote\curlhttpclient.h"
+#include "libdvblinkremote/dvblinkremote.h"
+#include "libdvblinkremote/curlhttpclient.h"
 #include "xbmc_pvr_types.h"
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
 #include "client.h"
-#include "..\threads\mutex.h"
+#include "platform/threads/mutex.h"
 #include <map>
 
 

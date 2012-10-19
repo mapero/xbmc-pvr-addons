@@ -22,7 +22,7 @@
 #include "client.h"
 #include "xbmc_pvr_dll.h"
 #include "DVBLinkClient.h"
-#include "..\util\util.h"
+#include "platform/util/util.h"
 
 //#include "curl/curl.h"
 
