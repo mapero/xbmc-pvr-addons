@@ -10,7 +10,7 @@ ADDONNAME       = pvr.dvblink
 LIBNAME         = libdvblink-addon
 lib_LTLIBRARIES = libdvblink-addon.la
 
-LIBS            = @abs_top_srcdir@/lib/libdvblinkremote/libdvblinkremote.la
+LIBS            = @abs_top_srcdir@/lib/libdvblinkremote/libdvblinkremote.la -ldl
 
 include ../Makefile.include.am
 
