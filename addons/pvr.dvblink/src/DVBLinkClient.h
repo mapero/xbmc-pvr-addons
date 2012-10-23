@@ -59,6 +59,7 @@ private:
 	DVBLINK_STREAMTYPE streamtype;
 	std::string clientname;
 	std::string hostname;
+	long port;
 
 	void SetEPGGenre(Program *program, EPG_TAG *tag);
 	std::string GetBuildInRecorderObjectID();
