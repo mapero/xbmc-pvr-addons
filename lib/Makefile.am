@@ -1,4 +1,4 @@
-SUBDIRS = libhts tinyxml tinyxml2 jsoncpp libdvblinkremote
+SUBDIRS = libhts tinyxml tinyxml2 jsoncpp libcurl libdvblinkremote
 
 zip:
 

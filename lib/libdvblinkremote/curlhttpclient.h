@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <cstring>
 #include <string>
 #include "dvblinkremote.h"
 #include "dvblinkremotehttp.h"
