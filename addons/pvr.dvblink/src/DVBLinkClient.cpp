@@ -10,7 +10,7 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 	this->hostname = hostname;
 	connected = false;
 	currentChannelId = 0;
-	httpClient = new CurlHttpClient();
+	httpClient = new HttpPostClient(XBMC,hostname,port);
 	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), 8080, username.c_str(), password.c_str());
 
 	DVBLinkRemoteStatusCode status;
@@ -52,12 +52,10 @@ int DVBLinkClient::GetChannelsAmount()
 PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
 	for( std::map<int,Channel*>::iterator it=channelMap.begin(); it!=channelMap.end(); ++it)
-	//for (std::vector<Channel*>::iterator it = channels->begin(); it < channels->end(); it++) 
 	{
-		//Channel* channel = (*it);
 		Channel* channel = (*it).second;
-
-		bool isRadio = (channel->Type == RD_CHANNEL_RADIO);
+		
+		bool isRadio = (channel->GetChannelType() == Channel::CHANNEL_TYPE_RADIO);
 
 		if (isRadio == bRadio)
 		{
@@ -69,7 +67,7 @@ PVR_ERROR DVBLinkClient::GetChannels(ADDON_HANDLE handle, bool bRadio)
 			xbmcChannel.iUniqueId = (*it).first;
 			PVR_STRCPY(xbmcChannel.strChannelName,channel->GetName().c_str());
 			CStdString stream;
-			if(channel->Type == RD_CHANNEL_RADIO)
+			if(isRadio)
 				stream.Format("pvr://stream/radio/%i.ts", channel->GetDvbLinkID());
 			else
 				stream.Format("pvr://stream/tv/%i.ts", channel->GetDvbLinkID());
@@ -109,51 +107,71 @@ PVR_ERROR DVBLinkClient::GetTimers(ADDON_HANDLE handle)
 	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
 
-	GetSchedulesRequest * getSchedulesRequest = new GetSchedulesRequest();
-	ScheduleList * schedules = new ScheduleList();
+	GetSchedulesRequest getSchedulesRequest;
+
+	StoredSchedules sschedules;
 
 	DVBLinkRemoteStatusCode status;
-	if ((status = dvblinkRemoteCommunication->GetSchedules(*getSchedulesRequest, *schedules)) == DVBLINK_REMOTE_STATUS_OK) {
-		
-		for (std::vector<Schedule*>::iterator it = schedules->begin(); it < schedules->end(); it++) 
+	int count = 0;
+	if ((status = dvblinkRemoteCommunication->GetSchedules(getSchedulesRequest, sschedules)) == DVBLINK_REMOTE_STATUS_OK) {
+
+		for (std::vector<StoredEpgSchedule*>::iterator it = sschedules.GetEpgSchedules().begin(); it < sschedules.GetEpgSchedules().end(); it++) 
 		{
-			Schedule* schedule = (Schedule*)*it;
+			StoredEpgSchedule* schedule = (StoredEpgSchedule*)*it;
 			PVR_TIMER xbmcTimer;
 			memset(&xbmcTimer, 0, sizeof(PVR_TIMER));
 			PVR_STR2INT(xbmcTimer.iClientIndex, schedule->GetID().c_str());
 			
 			xbmcTimer.iClientChannelUid = GetInternalUniqueIdFromChannelId(schedule->GetChannelID());
 			xbmcTimer.state = PVR_TIMER_STATE_SCHEDULED;
-			if (schedule->Type == EPG)
-			{
-				Program& p = schedule->GetProgram();
-				xbmcTimer.startTime =p.GetStartTime();
-				xbmcTimer.endTime = p.GetStartTime() + p.GetDuration();
-				PVR_STRCPY(xbmcTimer.strTitle,p.GetTitle().c_str());
-				PVR_STRCPY(xbmcTimer.strSummary,p.ShortDescription.c_str());
-				PVR_STR2INT(xbmcTimer.iEpgUid,schedule->GetProgramID().c_str());
-			}else{
-				xbmcTimer.startTime = schedule->StartTime;
-				xbmcTimer.endTime = schedule->StartTime + schedule->Duration;
-				PVR_STRCPY(xbmcTimer.strTitle,schedule->GetTitle().c_str());
-			}
+			xbmcTimer.bIsRepeating = schedule->Repeat;
+			PVR_STR2INT(xbmcTimer.iEpgUid,schedule->GetProgramID().c_str());
 
-
+			EpgSearchResult epgSearchResult;
+			if (DoEPGSearch(epgSearchResult,schedule->GetChannelID(), -1, -1,schedule->GetProgramID())) {
+				ChannelEpgData * channelepgdata = epgSearchResult[0];
+				
+				Program * program = channelepgdata->GetEpgData()[0];
+		
+				xbmcTimer.startTime =program->GetStartTime();
+				xbmcTimer.endTime = program->GetStartTime() + program->GetDuration();
+				PVR_STRCPY(xbmcTimer.strTitle,program->GetTitle().c_str());
+				PVR_STRCPY(xbmcTimer.strSummary,program->ShortDescription.c_str());
+				
+			}			
 			PVR->TransferTimerEntry(handle, &xbmcTimer);
+			count++;
 		}
-		timerCount = schedules->size();
+		for (std::vector<StoredManualSchedule*>::iterator it = sschedules.GetManualSchedules().begin(); it < sschedules.GetManualSchedules().end(); it++) 
+		{
+			StoredManualSchedule* schedule = (StoredManualSchedule*)*it;
+			PVR_TIMER xbmcTimer;
+			memset(&xbmcTimer, 0, sizeof(PVR_TIMER));
+			PVR_STR2INT(xbmcTimer.iClientIndex, schedule->GetID().c_str());
+			
+			xbmcTimer.iClientChannelUid = GetInternalUniqueIdFromChannelId(schedule->GetChannelID());
+
+
+			xbmcTimer.state = PVR_TIMER_STATE_SCHEDULED;
+			xbmcTimer.startTime = schedule->GetStartTime();
+			xbmcTimer.endTime =  schedule->GetStartTime() + schedule->GetDuration();
+			PVR_STRCPY(xbmcTimer.strTitle,schedule->Title.c_str());
+			//TODO: PAE: Add weekdays
+			PVR->TransferTimerEntry(handle, &xbmcTimer);
+			count++;
+		}
+
+		timerCount = count;
 		result = PVR_ERROR_NO_ERROR;
 	}
-	SAFE_DELETE(schedules);
-	SAFE_DELETE(getSchedulesRequest);
-	
 	return result;
 }
 
 PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 {
 	PVR_ERROR result = PVR_ERROR_FAILED;
-
+	//TODO: PAE: Fix adding timers
+	/*
 	PLATFORM::CLockObject critsec(m_mutex);
 	DVBLinkRemoteStatusCode status;
 	AddScheduleRequest * addScheduleRequest = NULL;
@@ -162,7 +180,7 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 	{
 		char programId [33];
 		PVR_INT2STR(programId,timer.iEpgUid);
-		addScheduleRequest = new AddScheduleByEpgRequest(channelId,programId,timer.bIsRepeating);
+		addScheduleRequest = new AddScheduleRequest(); //new AddScheduleByEpgRequest(channelId,programId,timer.bIsRepeating);
 	}else{
 		
 		addScheduleRequest = new AddManualScheduleRequest(channelId, timer.startTime, timer.endTime - timer.startTime, DAILY,timer.strTitle);
@@ -173,7 +191,7 @@ PVR_ERROR DVBLinkClient::AddTimer(const PVR_TIMER &timer)
 		result = PVR_ERROR_NO_ERROR;
 	}
 	SAFE_DELETE(addScheduleRequest);
-	
+	*/
 	return result;
 }
 
@@ -184,17 +202,15 @@ PVR_ERROR DVBLinkClient::DeleteTimer(const PVR_TIMER &timer)
 	DVBLinkRemoteStatusCode status;
 	char scheduleId [33];
 	PVR_INT2STR(scheduleId,timer.iClientIndex);
-	//_itoa (timer.iClientIndex,scheduleId,10);
 	
-	RemoveScheduleRequest * removeSchedule = new RemoveScheduleRequest(scheduleId);
+	RemoveScheduleRequest removeSchedule(scheduleId);
 
 
-	if ((status = dvblinkRemoteCommunication->RemoveSchedule(*removeSchedule)) == DVBLINK_REMOTE_STATUS_OK) {
+	if ((status = dvblinkRemoteCommunication->RemoveSchedule(removeSchedule)) == DVBLINK_REMOTE_STATUS_OK) {
 
 		PVR->TriggerTimerUpdate();
 		result = PVR_ERROR_NO_ERROR;
 	}
-	SAFE_DELETE(removeSchedule);
 	return result;
 }
 
@@ -208,23 +224,23 @@ std::string DVBLinkClient::GetBuildInRecorderObjectID()
 {
 	std::string result = "";
 	DVBLinkRemoteStatusCode status;
-	GetObjectRequest * getObjectsRequest = new GetObjectRequest(hostname.c_str(), "", OBJECT_TYPE_UNKNOWN, ITEM_TYPE_UNKNOWN,0,-1,true);
-	GetObjectResult * getObjectsResult = new GetObjectResult();
-	if ((status = dvblinkRemoteCommunication->GetObject(*getObjectsRequest, *getObjectsResult)) == DVBLINK_REMOTE_STATUS_OK) {
-
-		for(std::vector<Container*>::iterator it = getObjectsResult->Containers.begin(); it < getObjectsResult->Containers.end(); it++)
+	GetPlaybackObjectRequest getPlaybackObjectRequest(hostname.c_str(),"");
+	getPlaybackObjectRequest.RequestedObjectType = GetPlaybackObjectRequest::REQUESTED_OBJECT_TYPE_ALL;
+	getPlaybackObjectRequest.RequestedItemType = GetPlaybackObjectRequest::REQUESTED_ITEM_TYPE_ALL;
+	getPlaybackObjectRequest.IncludeChildrenObjectsForRequestedObject = true;
+	GetPlaybackObjectResponse getPlaybackObjectResponse;
+	if ((status = dvblinkRemoteCommunication->GetPlaybackObject(getPlaybackObjectRequest, getPlaybackObjectResponse)) == DVBLINK_REMOTE_STATUS_OK) {
+		for(std::vector<PlaybackContainer*>::iterator it = getPlaybackObjectResponse.GetPlaybackContainers().begin(); it < getPlaybackObjectResponse.GetPlaybackContainers().end(); it++)
 		{
-			Container * container = (Container *) *it;
-			if (strcmp(container->SourceId.c_str(), DVBLINK_BUILD_IN_RECORDER_SOURCE_ID) == 0)
+			PlaybackContainer * container = (PlaybackContainer *) *it;
+			if (strcmp(container->SourceID.c_str(), DVBLINK_BUILD_IN_RECORDER_SOURCE_ID) == 0)
 			{
-				result = container->ObjectID;
+				result = container->GetObjectID();
 				break;
 			}
 
 		}
 	}
-	SAFE_DELETE(getObjectsRequest);
-	SAFE_DELETE(getObjectsResult);
 	return result;
 }
 
@@ -233,23 +249,23 @@ std::string DVBLinkClient::GetRecordedTVByDateObjectID(const std::string& buildI
 {
 	std::string result = "";
 	DVBLinkRemoteStatusCode status;
-	GetObjectRequest * getRecordedTVRequest = new GetObjectRequest(hostname.c_str(),buildInRecoderObjectID, OBJECT_TYPE_UNKNOWN, ITEM_TYPE_UNKNOWN,0,-1,true);
-	GetObjectResult * getRecordedTVResult = new GetObjectResult();
 
-	if ((status = dvblinkRemoteCommunication->GetObject(*getRecordedTVRequest, *getRecordedTVResult)) == DVBLINK_REMOTE_STATUS_OK) {
-		for(std::vector<Container*>::iterator it = getRecordedTVResult->Containers.begin(); it < getRecordedTVResult->Containers.end(); it++)
+	GetPlaybackObjectRequest getPlaybackObjectRequest(hostname.c_str(),buildInRecoderObjectID);
+	getPlaybackObjectRequest.IncludeChildrenObjectsForRequestedObject = true;
+	GetPlaybackObjectResponse getPlaybackObjectResponse;
+
+
+	if ((status = dvblinkRemoteCommunication->GetPlaybackObject(getPlaybackObjectRequest, getPlaybackObjectResponse)) == DVBLINK_REMOTE_STATUS_OK) {
+		for(std::vector<PlaybackContainer*>::iterator it = getPlaybackObjectResponse.GetPlaybackContainers().begin(); it < getPlaybackObjectResponse.GetPlaybackContainers().end(); it++)
 		{
-			Container * container = (Container *) *it;
-			if (strcmp(container->Name.c_str(), "By Date") == 0)
+			PlaybackContainer * container = (PlaybackContainer *) *it;
+			if (strcmp(container->GetName().c_str(), "By Date") == 0)
 			{
-				result = container->ObjectID;
+				result = container->GetObjectID();
 				break;
 			}
 		}
-
 	}
-	SAFE_DELETE(getRecordedTVRequest);
-	SAFE_DELETE(getRecordedTVResult);
 	return result;
 
 }
@@ -259,14 +275,13 @@ PVR_ERROR DVBLinkClient::DeleteRecording(const PVR_RECORDING& recording)
     PLATFORM::CLockObject critsec(m_mutex);
 	PVR_ERROR result = PVR_ERROR_FAILED;
 	DVBLinkRemoteStatusCode status;
-	RemoveObjectRequest * deleteObj = new RemoveObjectRequest(recording.strRecordingId);
-	if ((status = dvblinkRemoteCommunication->RemoveObject(*deleteObj)) == DVBLINK_REMOTE_STATUS_OK) {
+	RemovePlaybackObjectRequest remoteObj(recording.strRecordingId);
+	
+	if ((status = dvblinkRemoteCommunication->RemovePlaybackObject(remoteObj)) == DVBLINK_REMOTE_STATUS_OK) {
 
 		PVR->TriggerRecordingUpdate();
 		 result = PVR_ERROR_NO_ERROR;
 	}
-
-	SAFE_DELETE(deleteObj);
 	return result;
 }
 
@@ -280,46 +295,68 @@ PVR_ERROR DVBLinkClient::GetRecordings(ADDON_HANDLE handle)
 	std::string recoderObjectId = GetBuildInRecorderObjectID();
 	std::string recordingsByDateObjectId = GetRecordedTVByDateObjectID(recoderObjectId);
 
-	GetObjectRequest * getRecordedTVRequest = new GetObjectRequest(hostname.c_str(),recordingsByDateObjectId, OBJECT_TYPE_UNKNOWN, ITEM_TYPE_UNKNOWN,0,-1,true);
-	GetObjectResult * getRecordedTVResult = new GetObjectResult();
 
-	if ((status = dvblinkRemoteCommunication->GetObject(*getRecordedTVRequest, *getRecordedTVResult)) == DVBLINK_REMOTE_STATUS_OK) {
-		for(std::vector<Item*>::iterator it = getRecordedTVResult->Items.begin(); it < getRecordedTVResult->Items.end(); it++)
-		{
-			Item * item = (Item *) *it;
+	GetPlaybackObjectRequest getPlaybackObjectRequest(hostname.c_str(),recordingsByDateObjectId);
+	getPlaybackObjectRequest.IncludeChildrenObjectsForRequestedObject = true;
+	GetPlaybackObjectResponse getPlaybackObjectResponse;
 
-			if (item->Type == ITEM_TYPE_RECORDED_TV)
-			{
-				RecordedTV * tvItem = (RecordedTV *) item;
-				PVR_RECORDING xbmcRecording;
-				memset(&xbmcRecording, 0, sizeof(PVR_RECORDING));
-				PVR_STRCPY(xbmcRecording.strRecordingId,tvItem->ObjectID.c_str());
-				PVR_STRCPY(xbmcRecording.strTitle,tvItem->VInfo.Title.c_str());
-				xbmcRecording.recordingTime = tvItem->VInfo.StartTime;
-				PVR_STRCPY(xbmcRecording.strPlot, tvItem->VInfo.ShortDescription.c_str());
-				PVR_STRCPY(xbmcRecording.strStreamURL, tvItem->Url.c_str());
-				xbmcRecording.iDuration = tvItem->VInfo.Duration;
-				PVR_STRCPY(xbmcRecording.strChannelName, tvItem->ChannelName.c_str());
-				PVR->TransferRecordingEntry(handle, &xbmcRecording);
-			}
+	if ((status = dvblinkRemoteCommunication->GetPlaybackObject(getPlaybackObjectRequest, getPlaybackObjectResponse)) == DVBLINK_REMOTE_STATUS_OK) {
+		
+		
+		for(std::vector<PlaybackItem*>::iterator it = getPlaybackObjectResponse.GetPlaybackItems().begin(); it < getPlaybackObjectResponse.GetPlaybackItems().end(); it++)
+		{		
+
+			RecordedTvItem * tvitem = (RecordedTvItem *) *it;
+			PVR_RECORDING xbmcRecording;
+			memset(&xbmcRecording, 0, sizeof(PVR_RECORDING));
+			
+			PVR_STRCPY(xbmcRecording.strRecordingId,tvitem->GetObjectID().c_str());
+			
+			PVR_STRCPY(xbmcRecording.strTitle,tvitem->GetMetadata().GetTitle().c_str());
+			
+			xbmcRecording.recordingTime = tvitem->GetMetadata().GetStartTime();
+			PVR_STRCPY(xbmcRecording.strPlot, tvitem->GetMetadata().ShortDescription.c_str());
+			PVR_STRCPY(xbmcRecording.strStreamURL, tvitem->GetPlaybackUrl().c_str());
+			xbmcRecording.iDuration =  tvitem->GetMetadata().GetDuration();
+			PVR_STRCPY(xbmcRecording.strChannelName,tvitem->ChannelName.c_str());
+			PVR_STRCPY(xbmcRecording.strThumbnailPath, tvitem->GetThumbnailUrl().c_str());
+			PVR->TransferRecordingEntry(handle, &xbmcRecording);
+
 		}
-		recordingCount = getRecordedTVResult->Items.size();
+		recordingCount = getPlaybackObjectResponse.GetPlaybackItems().size();
 		result = PVR_ERROR_NO_ERROR;
-	
 	}
-	 SAFE_DELETE(getRecordedTVRequest);
-	SAFE_DELETE(getRecordedTVResult);
 	return result;
 }
 
 long DVBLinkClient::GetFreeDiskSpace()
 {
-	return GetTotalDiskSpace();
+	/*
+	PLATFORM::CLockObject critsec(m_mutex);
+	GetRecordingSettingsRequest recordingsettingsrequest;
+
+	RecordingSettings settings;
+	DVBLinkRemoteStatusCode status;
+	if ((status = dvblinkRemoteCommunication->GetRecordingSettings(recordingsettingsrequest, settings)) != DVBLINK_REMOTE_STATUS_OK) {
+		return (settings.TotalSpace - settings.AvailableSpace) * 1024;
+	}
+	*/
+	return 0;
 }
 
 long DVBLinkClient::GetTotalDiskSpace()
 {
-	return 1024 * 1024 * 1024;
+	/*
+	PLATFORM::CLockObject critsec(m_mutex);
+	GetRecordingSettingsRequest recordingsettingsrequest;
+
+	RecordingSettings settings;
+	DVBLinkRemoteStatusCode status;
+	if ((status = dvblinkRemoteCommunication->GetRecordingSettings(recordingsettingsrequest, settings)) != DVBLINK_REMOTE_STATUS_OK) {
+		return settings.TotalSpace * 1024;
+	}
+	*/
+	return 0;
 }
 
 int DVBLinkClient::GetCurrentChannelId()
@@ -438,17 +475,36 @@ void DVBLinkClient::SetEPGGenre(Program *program, EPG_TAG *tag)
 
 }
 
+bool  DVBLinkClient::DoEPGSearch(EpgSearchResult& epgSearchResult, const std::string& channelId, const long startTime, const long endTime, const std::string& programId)
+{
+	PLATFORM::CLockObject critsec(m_mutex);
+	EpgSearchRequest epgSearchRequest(channelId, startTime, endTime);
+	if (programId.compare("")!= 0)
+	{
+		epgSearchRequest.ProgramID = programId;
+	}
+
+	DVBLinkRemoteStatusCode status;
+
+	if ((status = dvblinkRemoteCommunication->SearchEpg(epgSearchRequest, epgSearchResult)) == DVBLINK_REMOTE_STATUS_OK) {
+	
+		return true;
+	}
+
+	return false;
+}
+
 PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channel, time_t iStart, time_t iEnd)
 {
 	PVR_ERROR result = PVR_ERROR_FAILED;
 	PLATFORM::CLockObject critsec(m_mutex);
 	Channel * c = channelMap[channel.iUniqueId];
-	EpgSearchRequest* epgSearchRequest = new EpgSearchRequest(c->GetID(), iStart, iEnd);
-	EpgSearchResult* epgSearchResult = new EpgSearchResult();
-	DVBLinkRemoteStatusCode status;
+	EpgSearchResult epgSearchResult;
 
-	if ((status = dvblinkRemoteCommunication->SearchEpg(*epgSearchRequest, *epgSearchResult)) == DVBLINK_REMOTE_STATUS_OK) {
-		for (std::vector<ChannelEpgData*>::iterator it = epgSearchResult->begin(); it < epgSearchResult->end(); it++) 
+	
+
+	if (DoEPGSearch(epgSearchResult,c->GetID(), iStart, iEnd)) {
+		for (std::vector<ChannelEpgData*>::iterator it = epgSearchResult.begin(); it < epgSearchResult.end(); it++) 
 		{
 			ChannelEpgData* channelEpgData = (ChannelEpgData*)*it;
 			EpgData& epgData = channelEpgData->GetEpgData();
@@ -494,10 +550,6 @@ PVR_ERROR DVBLinkClient::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL
 		XBMC->Log(LOG_ERROR, "Not EPG data found for channel : %s with id : %i", channel.strChannelName, channel.iUniqueId);
 
 	}
-
-	SAFE_DELETE(epgSearchRequest);
-	SAFE_DELETE(epgSearchResult);
-
 	return result;
 }
 
