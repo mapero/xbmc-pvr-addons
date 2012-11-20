@@ -62,6 +62,8 @@ cLiveReceiver::cLiveReceiver(cLiveStreamer *Streamer, const cChannel *Channel, i
  : cReceiver(Channel, Priority)
  , m_Streamer(Streamer)
 {
+  SetPids(NULL);
+  AddPids(Pids);
   DEBUGLOG("Starting live receiver");
 }
 
@@ -520,7 +522,7 @@ void cLivePatFilter::Process(u_short Pid, u_char Tid, const u_char *Data, int Le
 
 cLiveStreamer::cLiveStreamer(uint32_t timeout)
  : cThread("cLiveStreamer stream processor")
- , cRingBufferLinear(MEGABYTE(3), TS_SIZE, true)
+ , cRingBufferLinear(MEGABYTE(3), TS_SIZE * 2, true)
  , m_scanTimeout(timeout)
 {
   m_Channel         = NULL;
@@ -691,7 +693,11 @@ void cLiveStreamer::Action(void)
       cTSDemuxer *demuxer = FindStreamDemuxer(ts_pid);
       if (demuxer)
       {
-        demuxer->ProcessTSPacket(buf);
+        if (!demuxer->ProcessTSPacket(buf))
+        {
+          used += TS_SIZE;
+          break;
+        }
       }
       else
         INFOLOG("no muxer found");

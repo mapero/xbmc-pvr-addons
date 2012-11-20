@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "platform", "platform\platform.vcxproj", "{FE4573F6-A794-4AD3-B37F-49E51F1140E6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml", "tinyxml\tinyxml.vcxproj", "{BDC7D21D-9FD9-41AA-BEC8-8B70E1448C50}"
@@ -23,12 +23,23 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.njoy", "..\..\addons\pv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjsoncpp", "..\..\lib\jsoncpp\project\VS2010Express\libjsoncpp.vcxproj", "{F3A72A50-E295-49BA-ACD7-8696907E0351}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.mythtv.cmyth", "..\..\addons\pvr.mythtv.cmyth\project\VS2010Express\pvr.mythtv.cmyth.vcxproj", "{A55ACC6B-837D-4784-8E41-66947B1D9B8C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF} = {F9E6874D-60A8-49BA-9393-A2105E63ABCF}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libcmyth", "..\..\lib\cmyth\Win32\libcmyth.vcxproj", "{F9E6874D-60A8-49BA-9393-A2105E63ABCF}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.vuplus", "..\..\addons\pvr.vuplus\project\VS2010Express\pvr.vuplus.vcxproj", "{848DCDD6-7142-4507-A75A-6872A9256F3F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{BDC7D21D-9FD9-41AA-BEC8-8B70E1448C50} = {BDC7D21D-9FD9-41AA-BEC8-8B70E1448C50}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.nextpvr", "..\..\addons\pvr.nextpvr\project\VS2010Express\XBMC_NextPVR.vcxproj", "{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.fortherecord.argus", "..\..\addons\pvr.fortherecord.argus\project\VS2010Express\pvr.fortherecord.argus.vcxproj", "{8A82D2E1-F76F-427C-9479-FE70DA02825D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.dvbviewer", "..\..\addons\pvr.dvbviewer\project\VS2010Express\pvr.dvbviewer.vcxproj", "{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pvr.dvblink", "..\..\addons\pvr.dvblink\project\VS2010Express\pvrclient_dvblink.vcxproj", "{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}"
 EndProject
@@ -112,6 +123,42 @@ Global
 		{F3A72A50-E295-49BA-ACD7-8696907E0351}.Release (DirectX)|Win32.Build.0 = Release (DirectX)|Win32
 		{F3A72A50-E295-49BA-ACD7-8696907E0351}.Release|Win32.ActiveCfg = Release|Win32
 		{F3A72A50-E295-49BA-ACD7-8696907E0351}.Release|Win32.Build.0 = Release|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Debug|Win32.Build.0 = Debug|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Release|Win32.ActiveCfg = Release|Win32
+		{A55ACC6B-837D-4784-8E41-66947B1D9B8C}.Release|Win32.Build.0 = Release|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Debug|Win32.Build.0 = Debug|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Release|Win32.ActiveCfg = Release|Win32
+		{F9E6874D-60A8-49BA-9393-A2105E63ABCF}.Release|Win32.Build.0 = Release|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.Build.0 = Debug|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.ActiveCfg = Release|Win32
+		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.Build.0 = Release|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.Build.0 = Debug|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.ActiveCfg = Release|Win32
+		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.Build.0 = Release|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Debug|Win32.Build.0 = Debug|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Release|Win32.ActiveCfg = Release|Win32
+		{8A82D2E1-F76F-427C-9479-FE70DA02825D}.Release|Win32.Build.0 = Release|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Debug (DirectX)|Win32.ActiveCfg = Debug|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Debug|Win32.Build.0 = Debug|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Release (DirectX)|Win32.ActiveCfg = Release|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Release|Win32.ActiveCfg = Release|Win32
+		{D31D6BEB-0285-47CF-9817-F8AD2CFDF0E8}.Release|Win32.Build.0 = Release|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Debug (DirectX)|Win32.ActiveCfg = Debug (DirectX)|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Debug (DirectX)|Win32.Build.0 = Debug (DirectX)|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Debug|Win32.ActiveCfg = Debug|Win32
@@ -120,14 +167,6 @@ Global
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release (DirectX)|Win32.Build.0 = Release (DirectX)|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release|Win32.ActiveCfg = Release|Win32
 		{F9F3E7B6-EF4C-4BD8-A921-3DE4C4268945}.Release|Win32.Build.0 = Release|Win32
-		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Debug|Win32.Build.0 = Debug|Win32
-		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.ActiveCfg = Release|Win32
-		{848DCDD6-7142-4507-A75A-6872A9256F3F}.Release|Win32.Build.0 = Release|Win32
-		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Debug|Win32.Build.0 = Debug|Win32
-		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.ActiveCfg = Release|Win32
-		{AAE3A937-C7CA-4A43-BCFC-C39C253820CC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

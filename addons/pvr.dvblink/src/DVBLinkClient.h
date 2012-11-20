@@ -1,8 +1,13 @@
 #pragma once
 
 #include "platform/os.h"
+<<<<<<< HEAD
 #include "libdvblinkremote/dvblinkremote.h"
 #include "libdvblinkremote/curlhttpclient.h"
+=======
+#include "libdvblinkremote\dvblinkremote.h"
+#include "HttpPostClient.h"
+>>>>>>> upstream/master
 #include "xbmc_pvr_types.h"
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
@@ -41,8 +46,9 @@ public:
 	long GetTotalDiskSpace();
 
 private:
+	bool DoEPGSearch(EpgSearchResult& epgSearchResult, const std::string& channelId, const long startTime, const long endTime, const std::string & programId = "");
 
-	CurlHttpClient* httpClient; 
+	HttpPostClient* httpClient; 
 	IDVBLinkRemoteConnection* dvblinkRemoteCommunication;
 	bool connected;
 	std::map<int,Channel *> channelMap;
