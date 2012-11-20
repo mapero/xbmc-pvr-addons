@@ -27,6 +27,7 @@
 #include "dvblinkremotehttp.h"
 #include "response.h"
 #include "request.h"
+#include "scheduling.h"
 #include "version.h"
 
 /**
@@ -116,11 +117,6 @@ namespace dvblinkremote
   const std::string DVBLINK_REMOTE_GET_RECORDINGS_CMD = "get_recordings";
 
   /**
-    * A constant string representing the DVBLink command for retrieving schedules. 
-    */
-  const std::string DVBLINK_REMOTE_GET_SCHEDULES_CMD = "get_schedules";
-
-  /**
     * A constant string representing the DVBLink command for adding a recording schedule. 
     */
   const std::string DVBLINK_REMOTE_ADD_SCHEDULE_CMD = "add_schedule";
@@ -146,15 +142,49 @@ namespace dvblinkremote
   const std::string DVBLINK_REMOTE_GET_PARENTAL_STATUS_CMD = "get_parental_status";
 
   /**
-    * A constant string representing the DVBLink command for retrieving objects. 
+    * A constant string representing the DVBLink command for retrieving schedules. 
+    */
+  const std::string DVBLINK_REMOTE_GET_SCHEDULES_CMD = "get_schedules";
+
+  /**
+    * A constant string representing the DVBLink command for updating a schedule. 
+    */
+  const std::string DVBLINK_REMOTE_UPDATE_SCHEDULE_CMD = "update_schedule";
+
+  /**
+    * A constant string representing the DVBLink command for retrieving a M3U playlist of channels. 
+    */
+  const std::string DVBLINK_REMOTE_GET_PLAYLIST_M3U_CMD = "get_playlist_m3u";
+
+  /**
+    * A constant string representing the DVBLink command for retrieving a playlist object. 
     */
   const std::string DVBLINK_REMOTE_GET_OBJECT_CMD = "get_object";
 
   /**
-    * A constant string representing the DVBLink command for removing a object. 
+    * A constant string representing the DVBLink command for removing a playlist object. 
     */
   const std::string DVBLINK_REMOTE_REMOVE_OBJECT_CMD = "remove_object";
 
+  /**
+    * A constant string representing the DVBLink command for stopping an active recording. 
+    */
+  const std::string DVBLINK_REMOTE_STOP_RECORDING_CMD = "stop_recording";
+
+  /**
+    * A constant string representing the DVBLink command for retrieving streaming capabilities. 
+    */
+  const std::string DVBLINK_REMOTE_GET_STREAMING_CAPABILITIES_CMD = "get_streaming_capabilities";
+
+  /**
+    * A constant string representing the DVBLink command for retrieving recording settings. 
+    */
+  const std::string DVBLINK_REMOTE_GET_RECORDING_SETTINGS_CMD = "get_recording_settings";
+
+  /**
+    * A constant string representing the DVBLink command for setting recording settings. 
+    */
+  const std::string DVBLINK_REMOTE_SET_RECORDING_SETTING_CMD = "set_recording_settings";
 
   /**
     * A constant string representing a Real Time Transport Protocol stream type for Android devices.
@@ -298,6 +328,35 @@ namespace dvblinkremote
     virtual DVBLinkRemoteStatusCode StopChannel(const StopStreamRequest& request) = 0;
 
     /**
+      * Add a schedule.
+      * @param[in] request A constant AddScheduleRequest reference representing the add schedule request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode AddSchedule(const AddScheduleRequest& request) = 0;
+
+    /**
+      * Gets a list of all schedules.
+      * @param[in]      request   A constant GetSchedulesRequest reference representing the get schedules request criterias.
+      * @param[in,out]  response  A ScheduleList reference that will be populated with Schedule objects.
+      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode GetSchedules(const GetSchedulesRequest& request, StoredSchedules& response) = 0;
+    
+    /**
+      * Update a schedule.
+      * @param[in] request A constant UpdateScheduleReqest reference representing the update schedule request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode UpdateSchedule(const UpdateScheduleRequest& request) = 0;
+
+    /**
+      * Remove a schedule.
+      * @param[in] request A constant RemoveScheduleRequest reference representing the remove schedule request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode RemoveSchedule(const RemoveScheduleRequest& request) = 0;
+
+    /**
       * Gets a list of all recordings.
       * @param[in]      request   A constant GetRecordingsRequest reference representing the get recordings request criterias.
       * @param[in,out]  response  A RecordingList reference that will be populated with Recording objects.
@@ -311,29 +370,6 @@ namespace dvblinkremote
       * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
       */
     virtual DVBLinkRemoteStatusCode RemoveRecording(const RemoveRecordingRequest& request) = 0;
-
-    /**
-      * Gets a list of all schedules.
-      * @param[in]      request   A constant GetSchedulesRequest reference representing the get schedules request criterias.
-      * @param[in,out]  response  A ScheduleList reference that will be populated with Schedule objects.
-      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
-      */
-    virtual DVBLinkRemoteStatusCode GetSchedules(const GetSchedulesRequest& request, ScheduleList& response) = 0;
-
-
-    /**
-      * Add a schedule.
-      * @param[in] request A constant AddScheduleRequest reference representing the add schedule request criterias.
-      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
-      */
-    virtual DVBLinkRemoteStatusCode AddSchedule(const AddScheduleRequest& request) = 0;
-
-    /**
-      * Remove a schedule.
-      * @param[in] request A constant RemoveScheduleRequest reference representing the remove schedule request criterias.
-      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
-      */
-    virtual DVBLinkRemoteStatusCode RemoveSchedule(const RemoveScheduleRequest& request) = 0;
 
     /**
       * Get parental status.
@@ -351,11 +387,58 @@ namespace dvblinkremote
       */
     virtual DVBLinkRemoteStatusCode SetParentalLock(const SetParentalLockRequest& request, ParentalStatus& response) = 0;
 
-	//TODO: PAE: Missing description
-	virtual DVBLinkRemoteStatusCode RemoveObject(const RemoveObjectRequest& request) = 0;
+    /**
+      * Gets a M3U playlist with direct HTTP links to all channels.
+      * @param[in]      request   A constant GetM3uPlaylistRequest reference representing the get M3U playlist request criterias.
+      * @param[in,out]  response  A M3uPlaylist reference that will be populated with M3U playlist file content.
+      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode GetM3uPlaylist(const GetM3uPlaylistRequest& request, M3uPlaylist& response) = 0;
 
-	//TODO: PAE: Missing description
-	virtual DVBLinkRemoteStatusCode GetObject(const GetObjectRequest& request, GetObjectResult & response ) = 0;
+    /**
+      * Gets a playback object.
+      * @param[in]      request   A constant GetPlaybackObjectRequest reference representing the get playback object request criterias.
+      * @param[in,out]  response  A GetObjectResult reference that will be populated with playback object details.
+      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode GetPlaybackObject(const GetPlaybackObjectRequest& request, GetPlaybackObjectResponse& response ) = 0;
+    
+    /**
+      * Remove a playback object.
+      * @param[in] request A constant RemovePlaybackObjectRequest reference representing the remove playback object request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode RemovePlaybackObject(const RemovePlaybackObjectRequest& request) = 0;
+
+    /**
+      * Stops a recording.
+      * @param[in] request A constant StopRecordingRequest reference representing the stop recording request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode StopRecording(const StopRecordingRequest& request) = 0;
+
+    /**
+      * Gets streams and protocols actually supported by a given instance of DVBLink server.
+      * @param[in]      request   A constant GetStreamingCapabilitiesRequest reference representing the get streaming capabilities request criterias.
+      * @param[in,out]  response  A StreamingCapabilities reference that will be populated with streaming capability details.
+      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode GetStreamingCapabilities(const GetStreamingCapabilitiesRequest& request, StreamingCapabilities& response) = 0;
+
+    /**
+      * Gets recording settings.
+      * @param[in]      request   A constant GetRecordingSettingsRequest reference representing the get recording settings request criterias.
+      * @param[in,out]  response  A RecordingSettings reference that will be populated with recording settings details.
+      * @return                   A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode GetRecordingSettings(const GetRecordingSettingsRequest& request, RecordingSettings& response) = 0;
+
+    /**
+      * Sets the recording settings.
+      * @param[in] request A constant SetRecordingSettingsRequest reference representing the set recording settings request criterias.
+      * @return            A DVBLinkRemoteStatusCode representing the status of the executed method.
+      */
+    virtual DVBLinkRemoteStatusCode SetRecordingSettings(const SetRecordingSettingsRequest& request) = 0;
 
     /**
       * Gets a description of the last occured error.

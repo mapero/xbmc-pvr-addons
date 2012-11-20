@@ -44,13 +44,19 @@ namespace dvblinkremote
     DVBLinkRemoteStatusCode StopChannel(const StopStreamRequest& request);
     DVBLinkRemoteStatusCode GetRecordings(const GetRecordingsRequest& request, RecordingList& response);
     DVBLinkRemoteStatusCode RemoveRecording(const RemoveRecordingRequest& request);
-	DVBLinkRemoteStatusCode GetSchedules(const GetSchedulesRequest& request, ScheduleList& response);
     DVBLinkRemoteStatusCode AddSchedule(const AddScheduleRequest& request);
+    DVBLinkRemoteStatusCode GetSchedules(const GetSchedulesRequest& request, StoredSchedules& response);
+    DVBLinkRemoteStatusCode UpdateSchedule(const UpdateScheduleRequest& request);
     DVBLinkRemoteStatusCode RemoveSchedule(const RemoveScheduleRequest& request);
     DVBLinkRemoteStatusCode GetParentalStatus(const GetParentalStatusRequest& request, ParentalStatus& response);
     DVBLinkRemoteStatusCode SetParentalLock(const SetParentalLockRequest& request, ParentalStatus& response);
-	DVBLinkRemoteStatusCode GetObject(const GetObjectRequest& request, GetObjectResult & response );
-    DVBLinkRemoteStatusCode RemoveObject(const RemoveObjectRequest& request);
+    DVBLinkRemoteStatusCode GetM3uPlaylist(const GetM3uPlaylistRequest& request, M3uPlaylist& response);
+    DVBLinkRemoteStatusCode GetPlaybackObject(const GetPlaybackObjectRequest& request, GetPlaybackObjectResponse& response);
+    DVBLinkRemoteStatusCode RemovePlaybackObject(const RemovePlaybackObjectRequest& request);
+    DVBLinkRemoteStatusCode StopRecording(const StopRecordingRequest& request);
+    DVBLinkRemoteStatusCode GetStreamingCapabilities(const GetStreamingCapabilitiesRequest& request, StreamingCapabilities& response);
+    DVBLinkRemoteStatusCode GetRecordingSettings(const GetRecordingSettingsRequest& request, RecordingSettings& response);
+    DVBLinkRemoteStatusCode SetRecordingSettings(const SetRecordingSettingsRequest& request);
     void GetLastError(std::string& err);
 
   private:

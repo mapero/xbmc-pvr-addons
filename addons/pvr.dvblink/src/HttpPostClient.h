@@ -1,6 +1,6 @@
 
-#include "libdvblinkremote\dvblinkremote.h"
-#include "libdvblinkremote\dvblinkremotehttp.h"
+#include "libdvblinkremote/dvblinkremote.h"
+#include "libdvblinkremote/dvblinkremotehttp.h"
 #include "libXBMC_addon.h"
 
 using namespace dvblinkremotehttp;

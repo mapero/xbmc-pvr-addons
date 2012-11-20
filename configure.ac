@@ -207,37 +207,19 @@ else
 fi
 AC_SUBST(DATADIR)
 
-<<<<<<< HEAD
-
-AC_OUTPUT([Makefile
-           lib/Makefile
-           lib/jsoncpp/Makefile
-           lib/libhts/Makefile
-           lib/tinyxml/Makefile
-	   lib/tinyxml2/Makefile
-	   lib/libdvblinkremote/Makefile
-           addons/Makefile
-           addons/pvr.demo/Makefile
-           addons/pvr.fortherecord.argus/Makefile
-           addons/pvr.hts/Makefile
-           addons/pvr.mediaportal.tvserver/Makefile
-           addons/pvr.nextpvr/Makefile
-           addons/pvr.njoy/Makefile
-           addons/pvr.vuplus/Makefile
-	   addons/pvr.dvblink/Makefile
-           addons/pvr.vdr.vnsi/Makefile])
-
-=======
 AC_CONFIG_FILES([Makefile \
                  lib/Makefile \
                  lib/jsoncpp/Makefile \
                  lib/libhts/Makefile \
                  lib/tinyxml/Makefile \
+		 lib/tinyxml2/Makefile \
+		 lib/libdvblinkremote/Makefile \
                  lib/cmyth/Makefile \
                  lib/cmyth/libcmyth/Makefile \
                  lib/cmyth/librefmem/Makefile \
                  addons/Makefile \
                  addons/pvr.demo/Makefile \
+		 addons/pvr.dvblink/Makefile \
                  addons/pvr.dvbviewer/Makefile \
                  addons/pvr.fortherecord.argus/Makefile \
                  addons/pvr.hts/Makefile \
@@ -249,4 +231,3 @@ AC_CONFIG_FILES([Makefile \
                  addons/pvr.mythtv.cmyth/Makefile])
 
 AC_OUTPUT
->>>>>>> upstream/master

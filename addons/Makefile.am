@@ -10,12 +10,9 @@ SUBDIRS = pvr.demo \
           pvr.vdr.vnsi \
           pvr.njoy \
           pvr.vuplus \
-<<<<<<< HEAD
-	  pvr.dvblink
-=======
+	  pvr.dvblink \
           pvr.fortherecord.argus \
           $(ADDITIONAL_SUBDIRS)
->>>>>>> upstream/master
 
 clean:
 	-rm -f *.zip

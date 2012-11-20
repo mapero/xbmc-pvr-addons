@@ -11,13 +11,8 @@ DVBLinkClient::DVBLinkClient(CHelper_libXBMC_addon  *XBMC, CHelper_libXBMC_pvr *
 	this->port = port;
 	connected = false;
 	currentChannelId = 0;
-<<<<<<< HEAD
-	httpClient = new CurlHttpClient();
-	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), port, username.c_str(), password.c_str());
-=======
 	httpClient = new HttpPostClient(XBMC,hostname,port);
-	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), 8080, username.c_str(), password.c_str());
->>>>>>> upstream/master
+	dvblinkRemoteCommunication = DVBLinkRemote::Connect((HttpClient&)*httpClient, hostname.c_str(), port, username.c_str(), password.c_str());
 
 	DVBLinkRemoteStatusCode status;
 	channels = NULL;
