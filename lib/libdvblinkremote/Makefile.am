@@ -35,8 +35,9 @@ libdvblinkremote_la_SOURCES = 	add_manual_schedule_request.cpp \
 	windows_media_stream_request.cpp \
 	xml_object_serializer.cpp
 
-
-INCLUDES=-I../
+LIBS= @abs_top_srcdir@/lib/libcurl/lib/libcurl.la  @abs_top_srcdir@/lib/tinyxml2/libtinyxml2.la
+ 
+INCLUDES=-I@abs_top_srcdir@/lib/libcurl/include -I..
 
 $(LIB): libdvblinkremote.la
 	cp -f .libs/libdvblinkremote.a .

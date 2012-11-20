@@ -18,6 +18,6 @@ use vars qw(
     $Cpreprocessor
     );
 
-$Cpreprocessor = 'gcc -E';
+$Cpreprocessor = 'arm-linux-gnueabihf-gcc -E';
 
 1;

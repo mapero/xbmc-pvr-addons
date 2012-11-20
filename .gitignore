@@ -54,3 +54,5 @@ addons/*/project/VS2010Express/Debug
 addons/*/project/VS2010Express/Release
 lib/jsoncpp/project/VS2010Express/Debug
 lib/jsoncpp/project/VS2010Express/Release
+
+*~

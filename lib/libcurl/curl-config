@@ -75,7 +75,7 @@ while test $# -gt 0; do
 	;;
 
     --cc)
-	echo "gcc"
+	echo "arm-linux-gnueabihf-gcc"
 	;;
 
     --prefix)
@@ -83,13 +83,13 @@ while test $# -gt 0; do
 	;;
 
     --feature|--features)
-        for feature in SSL IPv6 libz IDN NTLM NTLM_WB TLS-SRP ""; do
+        for feature in  ""; do
             test -n "$feature" && echo "$feature"
         done
 	;;
 
     --protocols)
-        for protocol in DICT FILE FTP FTPS GOPHER HTTP HTTPS IMAP IMAPS LDAP LDAPS POP3 POP3S RTMP RTSP SMTP SMTPS TELNET TFTP; do
+        for protocol in DICT FILE FTP GOPHER HTTP IMAP POP3 RTSP SMTP TELNET TFTP; do
             echo "$protocol"
         done
 	;;
@@ -148,18 +148,18 @@ while test $# -gt 0; do
 	   CURLLIBDIR=""
 	fi
 	if test "Xno" = "Xyes"; then
-	  echo ${CURLLIBDIR}-lcurl -lidn -lssl -lcrypto -lldap -lrt -lssl -lcrypto -lz -lrtmp 
+	  echo ${CURLLIBDIR}-lcurl -lrt 
 	else
 	  echo ${CURLLIBDIR}-lcurl 
 	fi
 	;;
 
     --static-libs)
-	echo ${exec_prefix}/lib/libcurl.a  -lidn -lssl -lcrypto -lldap -lrt -lssl -lcrypto -lz -lrtmp 
+	echo ${exec_prefix}/lib/libcurl.a -L/home/jochen/Workspaces/git-mapero/lib -lrt 
 	;;
 
     --configure)
-      echo ""
+      echo " '--host=arm-linux-gnueabihf' 'host_alias=arm-linux-gnueabihf' 'LDFLAGS=-L/home/jochen/Workspaces/git-mapero/lib'"
     ;;
 
     *)
